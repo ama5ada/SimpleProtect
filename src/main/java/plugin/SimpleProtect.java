@@ -45,6 +45,9 @@ public class SimpleProtect extends JavaPlugin {
         getEntityStoreRegistry().registerSystem(new DamageBlockEventSystem(DamageBlockEvent.class));
         var interactionRegistry = getCodecRegistry(Interaction.CODEC);
         interactionRegistry.register("UseBlock", CustomUseBlockInteraction.class, CustomUseBlockInteraction.CODEC);
+        interactionRegistry.register("PlaceFluid", CustomPlaceFluidInteraction.class, CustomPlaceFluidInteraction.CODEC);
+        interactionRegistry.register("RefillContainer", CustomRefillContainerInteraction.class, CustomRefillContainerInteraction.CODEC);
+        interactionRegistry.register("CycleBlockGroup", CustomCycleBlockGroupInteraction.class, CustomCycleBlockGroupInteraction.CODEC);
     }
 
     public static SimpleProtect get() {

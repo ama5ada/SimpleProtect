@@ -51,7 +51,7 @@ public class SetNotifyPlayerCommand extends AbstractPlayerCommand {
         UUID playerId = sender.getUuid();
         getLogger().info(
                 String.format("%s set Simple Protection player notifications to : %s", playerId, toggleValue));
-        ConfigState.get().setProtected(toggleValue);
+        ConfigState.get().setNotifyPlayer(toggleValue);
 
         player.sendMessage(Message.raw(
                 String.format("Set Simple Protection player notifications to : %s", toggleValue)));
