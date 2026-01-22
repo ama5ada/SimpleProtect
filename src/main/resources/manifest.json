@@ -2,5 +2,8 @@
   "Group": "Mods",
   "Name": "SimpleProtect",
   "Version": "1.0.0",
-  "Main": "plugin.SimpleProtect"
+  "Main": "plugin.SimpleProtect",
+  "Dependencies": {
+    "Mods:MoreEvents": ">=1.0.0"
+  }
 }

@@ -1,23 +1,23 @@
 package plugin;
 
 import com.hypixel.hytale.server.core.event.events.ecs.*;
-import com.hypixel.hytale.server.core.modules.interaction.interaction.config.Interaction;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.util.Config;
 import plugin.commands.ProtectCommand;
 import plugin.commands.SetNotifyPlayerCommand;
 import plugin.commands.SetProtectedCommand;
+import plugin.commands.SetVerboseCommand;
+import plugin.events.*;
+import plugin.systems.*;
 
 
 import javax.annotation.Nonnull;
 import java.io.File;
 
 public class SimpleProtect extends JavaPlugin {
-    private static SimpleProtect instance;
     public SimpleProtect(@Nonnull JavaPluginInit init) {
         super(init);
-        instance = this;
         Config<PluginConfig> pluginConfig = withConfig(PluginConfig.CODEC);
         ConfigState.init(pluginConfig);
     }
@@ -25,9 +25,10 @@ public class SimpleProtect extends JavaPlugin {
     @Override
     protected void setup() {
         super.setup();
+        ConfigState.get().initializeDefaults();
         ProtectCommand protectCommand = new ProtectCommand("simpleprotect",
                 "Simple Protect Commands", false) {{
-                    addAliases("sp");
+                    addAliases("spr");
         }};
         protectCommand.addSubCommand(new SetProtectedCommand("protect",
                 "Set Simple Protect protection to true/false", false) {{
@@ -37,21 +38,34 @@ public class SimpleProtect extends JavaPlugin {
                 "Set Simple Protect notifications to true/false", false) {{
                     addAliases("n");
         }});
+        protectCommand.addSubCommand(new SetVerboseCommand("verbose",
+                "Set Simple Protect verbose logging to true/false", false) {{
+            addAliases("v");
+        }});
+
+        // Add a command for registering a new world with SimpleProtect by name
+        // - Add a GUI for setting up the world
+        // Add a command for clearing a world with SimpleProtect by name
+        // Add a command for renaming a world with SimpleProtect by name
+        // Add a command for modifying each field of a world
+        // - Add a GUI for viewing & modifying registered worlds
+
+        // Add a command for modifying each field of DefaultWorld
+        // - Add a GUI for viewing & modifying DefaultWorld
+
+
+
         getCommandRegistry().registerCommand(protectCommand);
 
         getEntityStoreRegistry().registerSystem(new BreakBlockEventSystem(BreakBlockEvent.class));
         getEntityStoreRegistry().registerSystem(new PlaceBlockEventSystem(PlaceBlockEvent.class));
         getEntityStoreRegistry().registerSystem(new UseBlockEventSystem(UseBlockEvent.Pre.class));
         getEntityStoreRegistry().registerSystem(new DamageBlockEventSystem(DamageBlockEvent.class));
-        var interactionRegistry = getCodecRegistry(Interaction.CODEC);
-        interactionRegistry.register("UseBlock", CustomUseBlockInteraction.class, CustomUseBlockInteraction.CODEC);
-        interactionRegistry.register("PlaceFluid", CustomPlaceFluidInteraction.class, CustomPlaceFluidInteraction.CODEC);
-        interactionRegistry.register("RefillContainer", CustomRefillContainerInteraction.class, CustomRefillContainerInteraction.CODEC);
-        interactionRegistry.register("CycleBlockGroup", CustomCycleBlockGroupInteraction.class, CustomCycleBlockGroupInteraction.CODEC);
-    }
-
-    public static SimpleProtect get() {
-        return instance;
+        getEntityStoreRegistry().registerSystem(new PlaceFluidEventSystem(PlaceFluidEvent.class));
+        getEntityStoreRegistry().registerSystem(new RefillContainerEventSystem(RefillContainerEvent.class));
+        getEntityStoreRegistry().registerSystem(new CycleBlockGroupEventSystem(CycleBlockGroupEvent.class));
+        getEntityStoreRegistry().registerSystem(new HarvestBlockEventSystem(HarvestBlockEvent.class));
+        getEntityStoreRegistry().registerSystem(new GatherBlockEventSystem(GatherBlockEvent.class));
     }
 
     @Nonnull

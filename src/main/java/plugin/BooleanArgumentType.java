@@ -19,12 +19,12 @@ public class BooleanArgumentType extends SingleArgumentType<Boolean> {
         String value = input.trim().toLowerCase();
 
         return switch (value) {
-            case "true", "yes", "on", "1" -> true;
-            case "false", "no", "off", "0" -> false;
+            case "true", "t", "yes", "y", "on", "1" -> true;
+            case "false", "f", "no", "n", "off", "0" -> false;
             default -> {
-                // Tell the command system parsing failed
+                // Message to player as a result of improper argument for a boolean command
                 parseResult.fail(Message.raw("The wrong type of required argument was provided.\n" +
-                        "Expected : Boolean 'true, yes, on, 1' or 'false, no, off, 0'\n" +
+                        "Expected : Boolean \nTrue : 'true, yes, on, 1'\nFalse: 'false, no, off, 0'\n" +
                         "Provided : " + value));
                 yield null;
             }
