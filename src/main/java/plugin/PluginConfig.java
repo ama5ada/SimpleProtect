@@ -25,7 +25,7 @@ public class PluginConfig {
     public SimpleProtectWorldConfig defaultWorldConfig = new SimpleProtectWorldConfig();
     public Map<String, SimpleProtectWorldConfig> worlds = new HashMap<>();
 
-    public void initializeDefaults() {
+    public boolean initializeDefaults() {
         if (this.defaultWorldConfig == null) {
             this.defaultWorldConfig = new SimpleProtectWorldConfig();
         }
@@ -35,7 +35,9 @@ public class PluginConfig {
             SimpleProtectWorldConfig copyDefault = new SimpleProtectWorldConfig();
             copyDefault.applyDefaults(defaultWorldConfig);
             this.worlds.put("default", copyDefault);
+            return true;
         }
+        return false;
     }
 
     public static final Codec<Map<String, SimpleProtectWorldConfig>> WORLDS_CODEC =

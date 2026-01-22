@@ -62,6 +62,6 @@ public class ConfigState {
     }
 
     public void initializeDefaults() {
-        getData().initializeDefaults();
+        if (getData().initializeDefaults()) config.save();
     }
 }
