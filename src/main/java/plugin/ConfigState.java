@@ -1,6 +1,7 @@
 package plugin;
 
 import com.hypixel.hytale.server.core.util.Config;
+import plugin.types.SimpleProtectWorldConfig;
 
 public class ConfigState {
 
@@ -46,5 +47,21 @@ public class ConfigState {
     public void setNotifyPlayer(Boolean value) {
         getData().notifyPlayer = value;
         config.save();
+    }
+
+    public boolean isVerbose() { return getData().verbose; }
+
+    public void setVerbose(Boolean value) {
+        getData().verbose = value;
+        config.save();
+    }
+
+    public SimpleProtectWorldConfig getWorldProtectionConfig(String world) {
+        // Try to get the queried world config, if it doesn't exist return default
+        return getData().worlds.getOrDefault(world, getData().defaultWorldConfig);
+    }
+
+    public void initializeDefaults() {
+        getData().initializeDefaults();
     }
 }
