@@ -10,5 +10,6 @@ public enum EVENT_TYPE {
     BLOCK_HARVEST,
     BLOCK_GATHER,
     BLOCK_CYCLE,
+    BUILDER_TOOL,
     ALL
 }

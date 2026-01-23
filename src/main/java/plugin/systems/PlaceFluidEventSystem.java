@@ -25,8 +25,7 @@ public class PlaceFluidEventSystem extends EntityEventSystem<EntityStore, PlaceF
                        @Nonnull CommandBuffer<EntityStore> commandBuffer,
                        @Nonnull PlaceFluidEvent placeFluidEvent) {
         Player player = archetypeChunk.getComponent(i, Player.getComponentType());
-        String worldName = player.getWorld().getName();
-        if (ProtectionUtil.ShouldProtect(player, worldName, EVENT_TYPE.FLUID_PLACE)) placeFluidEvent.setCancelled(true);
+        if (ProtectionUtil.ShouldProtect(player, EVENT_TYPE.FLUID_PLACE)) placeFluidEvent.setCancelled(true);
     }
 
     @Nullable

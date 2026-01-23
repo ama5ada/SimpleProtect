@@ -1,6 +1,9 @@
 package plugin;
 
 import com.hypixel.hytale.server.core.event.events.ecs.*;
+import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
+import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.util.Config;
@@ -10,7 +13,6 @@ import plugin.commands.SetProtectedCommand;
 import plugin.commands.SetVerboseCommand;
 import plugin.events.*;
 import plugin.systems.*;
-
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -66,6 +68,11 @@ public class SimpleProtect extends JavaPlugin {
         getEntityStoreRegistry().registerSystem(new CycleBlockGroupEventSystem(CycleBlockGroupEvent.class));
         getEntityStoreRegistry().registerSystem(new HarvestBlockEventSystem(HarvestBlockEvent.class));
         getEntityStoreRegistry().registerSystem(new GatherBlockEventSystem(GatherBlockEvent.class));
+
+        getEventRegistry().registerGlobal(PlayerReadyEvent.class, PlayerReadyHandler::HandlePlayerReady);
+        getEventRegistry().register(PlayerDisconnectEvent.class, PlayerDisconnectHandler::HandlePlayerDisconnect);
+
+        PacketAdapters.registerInbound(new BuildToolPacketFilter());
     }
 
     @Nonnull

@@ -9,7 +9,7 @@ import java.util.*;
 public class SimpleProtectWorldConfig {
     public boolean protectionEnabled = true;
     public boolean notifyPlayer = true;
-    public Set<EVENT_TYPE> enabledProtections = new HashSet<>(Set.of(EVENT_TYPE.ALL));
+    public Set<EVENT_TYPE> enabledProtections = new HashSet<>(EnumSet.allOf(EVENT_TYPE.class));
     public Set<UUID> allowedPlayers = new HashSet<>();
 
     public static final BuilderCodec<SimpleProtectWorldConfig> CODEC =

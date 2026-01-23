@@ -32,7 +32,7 @@ public class ConfigState {
     }
 
     public String getPermission() {
-        return "com.simpleprotect.bypass";
+        return "mods.simpleprotect.bypass";
     }
 
     public boolean isProtected() { return getData().protectionEnabled; }
@@ -62,6 +62,7 @@ public class ConfigState {
     }
 
     public void initializeDefaults() {
+        // Try to set defaults, if the defaults had to be set (first run) then save the config
         if (getData().initializeDefaults()) config.save();
     }
 }
