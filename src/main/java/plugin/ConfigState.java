@@ -3,6 +3,8 @@ package plugin;
 import com.hypixel.hytale.server.core.util.Config;
 import plugin.types.SimpleProtectWorldConfig;
 
+import java.util.List;
+
 public class ConfigState {
 
     private static ConfigState instance;
@@ -34,6 +36,7 @@ public class ConfigState {
     public String getPermission() {
         return "mods.simpleprotect.bypass";
     }
+    public String getAdministratePermission() { return "mods.simpleprotect.administrate"; }
 
     public boolean isProtected() { return getData().protectionEnabled; }
 
@@ -56,13 +59,41 @@ public class ConfigState {
         config.save();
     }
 
+    public void updateGlobalConfig(boolean isProtected, boolean canNotify, boolean isVerbose) {
+        getData().protectionEnabled = isProtected;
+        getData().notifyPlayer = canNotify;
+        getData().verbose = isVerbose;
+        config.save();
+    }
+
     public SimpleProtectWorldConfig getWorldProtectionConfig(String world) {
         // Try to get the queried world config, if it doesn't exist return default
         return getData().worlds.getOrDefault(world, getData().defaultWorldConfig);
     }
 
+    public void setWorldProtectionConfig(String world, SimpleProtectWorldConfig worldConfig) {
+        getData().setWorld(world, worldConfig);
+        config.save();
+    }
+
+    public void deleteWorldProtectionConfig(String world) {
+        // Do not allow the default world to be deleted, an empty list of worlds will cause the CODEC to fail
+        // So this is the guard entry against that failure
+        if (!world.equals("default")) getData().removeWorld(world);
+        config.save();
+    }
+
+    public void updateDefaultWorldConfig(SimpleProtectWorldConfig worldConfig) {
+        getData().setDefaultConfig(worldConfig);
+        config.save();
+    }
+
     public void initializeDefaults() {
         // Try to set defaults, if the defaults had to be set (first run) then save the config
         if (getData().initializeDefaults()) config.save();
+    }
+
+    public String[] getWorldNames() {
+        return getData().worlds.keySet().toArray(String[]::new);
     }
 }

@@ -84,6 +84,18 @@ public class PluginConfig {
         this.worlds = worlds;
     }
 
+    public void setWorld(String target, SimpleProtectWorldConfig update) {
+        worlds.put(target, update);
+    }
+
+    public void removeWorld(String target) {
+        worlds.remove(target);
+    }
+
+    public void updateDefaultConfig(SimpleProtectWorldConfig update) {
+        defaultWorldConfig = update;
+    }
+
     public void addWorld(String worldId) {
         SimpleProtectWorldConfig config = new SimpleProtectWorldConfig();
         config.applyDefaults(this.defaultWorldConfig);

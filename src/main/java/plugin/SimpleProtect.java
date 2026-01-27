@@ -7,10 +7,7 @@ import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.util.Config;
-import plugin.commands.ProtectCommand;
-import plugin.commands.SetNotifyPlayerCommand;
-import plugin.commands.SetProtectedCommand;
-import plugin.commands.SetVerboseCommand;
+import plugin.commands.*;
 import plugin.events.*;
 import plugin.systems.*;
 
@@ -44,6 +41,10 @@ public class SimpleProtect extends JavaPlugin {
                 "Set Simple Protect verbose logging to true/false", false) {{
             addAliases("v");
         }});
+        protectCommand.addSubCommand(new ManageCommand("manage",
+                "Open Simple Protect settings management page", false) {{
+                    addAliases("m", "modify", "admin");
+        }});
 
         // Add a command for registering a new world with SimpleProtect by name
         // - Add a GUI for setting up the world
@@ -54,8 +55,6 @@ public class SimpleProtect extends JavaPlugin {
 
         // Add a command for modifying each field of DefaultWorld
         // - Add a GUI for viewing & modifying DefaultWorld
-
-
 
         getCommandRegistry().registerCommand(protectCommand);
 

@@ -1,0 +1,9 @@
+$C = "Common.ui";
+
+TextField #WorldNameInput {
+    FlexWeight: 1;
+    Background: $C.@InputBoxBackground;
+    Padding: (Left: 10, Right: 10);
+    Anchor: (Right: 10);
+    PlaceholderText: "Name your new world";
+}

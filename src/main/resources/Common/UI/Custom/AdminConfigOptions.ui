@@ -1,0 +1,41 @@
+Group #AdminConfigOptions {
+    LayoutMode: Top;
+    TextButton #DefaultWorldBtn {
+        Padding: (Full: 5);
+        Style: TextButtonStyle(
+            Default: (
+                LabelStyle: (
+                    FontSize: 16,
+                    TextColor: #ffffffff
+                )
+            ),
+        );
+        Text: "Default World Settings";
+    }
+
+    TextButton #CreateConfigBtn {
+        Padding: (Full: 5);
+        Style: TextButtonStyle(
+            Default: (
+                LabelStyle: (
+                    FontSize: 16,
+                    TextColor: #ffffffff
+                )
+            ),
+        );
+        Text: "Create new world config";
+    }
+
+    TextButton #EditGlobalConfigBtn {
+        Padding: (Full: 5);
+        Style: TextButtonStyle(
+            Default: (
+                LabelStyle: (
+                    FontSize: 16,
+                    TextColor: #ffffffff
+                )
+            ),
+        );
+        Text: "Edit global config";
+    }
+}

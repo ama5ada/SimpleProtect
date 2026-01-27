@@ -1,0 +1,15 @@
+$C = "Common.ui";
+
+TextButton #ExitPanelButton {
+    Style: TextButtonStyle(
+        Default: (
+            LabelStyle: (
+                FontSize: 16,
+                TextColor: #ffffffff,
+                RenderBold: true
+            )
+        ),
+        Sounds: $C.@ButtonSounds
+    );
+    Text: "X";
+}

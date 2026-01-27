@@ -1,0 +1,85 @@
+$C = "Common.ui";
+
+Group {
+    LayoutMode: Center;
+
+    Group #SimpleProtectPanel {
+        Background: #1C1C1CCC;
+        Anchor: (Width: 980, Height: 650);
+        LayoutMode: Top;
+        Padding: (Full: 10);
+
+        Group #TopBarPanel {
+            LayoutMode: Left;
+            FlexWeight: 1;
+            Padding: (Top: 10, Bottom: 10);
+
+            Group #WorldSearchInputPanel {
+                FlexWeight: 1;
+                LayoutMode: Left;
+
+                TextField #WorldSearchInput {
+                    FlexWeight: 9;
+                    Background: $C.@InputBoxBackground;
+                    Padding: (Left: 10, Right: 10);
+                    PlaceholderText: "Search for a world";
+                }
+
+                Group #WorldSearchSpacer {
+                    FlexWeight: 3;
+                }
+            }
+
+            Label #SimpleProtect {
+                Style: (FontSize: 22, Alignment: Center, RenderBold: true);
+                Text: "Simple Protect";
+                FlexWeight: 1;
+            }
+
+            Group #Spacer {
+                FlexWeight: 1;
+            }
+
+        }
+
+        Group #BottomPanel {
+            FlexWeight: 10;
+            LayoutMode: Left;
+
+            Group #LeftColumnPanel {
+                LayoutMode: Top;
+                FlexWeight: 1;
+
+                Group #WorldList {
+                    LayoutMode: Top;
+                    FlexWeight: 1;
+                }
+            }
+
+            Group #ConfigInfoPanel {
+                LayoutMode: Top;
+                FlexWeight: 3;
+                Padding: (Full: 5);
+                Background: #1C1C1CCC;
+
+                Group #ConfigInfoTopBar {
+                    LayoutMode: Left;
+
+                    Label #InfoTitle {
+                        Style: (FontSize: 16, RenderBold: true);
+                        Text: " ";
+                        FlexWeight: 1;
+                    }
+
+                    Group #ExitPlaceholder {
+                        Padding: (Full: 0);
+                    }
+                }
+
+                Group #ConfigInfoBody {
+                    FlexWeight: 1;
+                }
+            }
+        }
+    }
+}

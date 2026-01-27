@@ -1,0 +1,43 @@
+$C = "Common.ui";
+
+Group #EditGlobalConfigPanel {
+    LayoutMode: Top;
+
+    Group #GlobalFields {
+        LayoutMode: Top;
+        FlexWeight: 1;
+
+        $C.@CheckBoxWithLabel #GlobalProtection {
+            @Text = "Global Protection - Disabling will turn off protection across all worlds.";
+            Padding: (Top: 5, Bottom: 5);
+        }
+
+        $C.@CheckBoxWithLabel #PlayerNotify {
+            @Text = "Player Notification - Disabling will turn off messages to players across all worlds.";
+            Padding: (Top: 5, Bottom: 5);
+        }
+
+        $C.@CheckBoxWithLabel #VerboseLogging {
+            @Text = "Verbose Logging - Disabling will turn off detailed server console logs.";
+            Padding: (Top: 5, Bottom: 5);
+        }
+    }
+
+    Group #GlobalConfigButtons {
+        LayoutMode: Right;
+
+        $C.@TextButton #SaveBtn {
+            Text: "Save";
+            Anchor: (Right: 10);
+        }
+
+        $C.@TextButton #LoadBtn {
+            Text: "Load";
+            Anchor: (Right: 10);
+        }
+
+        $C.@CancelTextButton #CancelBtn {
+            Text: "Cancel";
+        }
+    }
+}

@@ -1,0 +1,5 @@
+$C = "Common.ui";
+
+$C.@CancelTextButton #CancelBtn {
+    Text: "Cancel";
+}

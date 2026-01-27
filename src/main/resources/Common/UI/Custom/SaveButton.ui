@@ -1,0 +1,6 @@
+$C = "Common.ui";
+
+$C.@TextButton #SaveBtn {
+    Text: "Save";
+    Anchor: (Right: 10);
+}

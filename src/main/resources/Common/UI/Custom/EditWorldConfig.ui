@@ -1,0 +1,89 @@
+$C = "Common.ui";
+
+Group #EditWorldConfigPanel {
+    LayoutMode: Top;
+
+    Group #WorldFields {
+        LayoutMode: Top;
+
+        $C.@CheckBoxWithLabel #WorldProtection {
+            @Text = "World Protection - Toggle Simple Protect for this world.";
+            Padding: (Top: 5, Bottom: 5);
+        }
+
+        $C.@CheckBoxWithLabel #WorldPlayerNotify {
+            @Text = "Player Notification - Toggle Player Notifications for this world.";
+            Padding: (Top: 5, Bottom: 5);
+        }
+    }
+
+    Group #ProtectionSettings {
+        LayoutMode: Left;
+        FlexWeight: 1;
+        Anchor: (Top: 5, Bottom: 25);
+
+        Group #EnabledProtectionPanel {
+            LayoutMode: Top;
+            FlexWeight: 1;
+
+            Label #EnabledProtectionsTitle {
+                Text: "Enabled Protections";
+                Style: (FontSize: 16, RenderBold: true);
+            }
+
+            Group #EnabledProtections {
+                LayoutMode: TopScrolling;
+                ScrollbarStyle: $C.@DefaultScrollbarStyle;
+            }
+        }
+
+        Group #DisabledProtectionPanel {
+            LayoutMode: Top;
+            FlexWeight: 1;
+
+            Label #DisabledProtectionsTitle {
+                Text: "Disabled Protections";
+                Style: (FontSize: 16, RenderBold: true);
+            }
+
+            Group #DisabledProtections {
+                LayoutMode: TopScrolling;
+                ScrollbarStyle: $C.@DefaultScrollbarStyle;
+            }
+        }
+    }
+
+    Group #AllowedPlayersPanel {
+        LayoutMode: Top;
+        FlexWeight: 1;
+
+        Label #AllowedPlayersTitle {
+            Text: "Allowed Players (Can bypass world protections)";
+            Padding: (Top: 5, Bottom: 5);
+        }
+
+        Group #PlayerSearchGroup {
+            LayoutMode: Left;
+            FlexWeight: 1;
+            TextField #PlayerSearchInput {
+                FlexWeight: 1;
+                Background: $C.@InputBoxBackground;
+                PlaceholderText: "Search for a player by UUID";
+                Padding: (Left: 10, Right: 10);
+            }
+
+            Group #PlayerSearchSpacer {
+                FlexWeight: 1;
+            }
+        }
+
+        Group #AllowedPlayers {
+            LayoutMode: Top;
+            FlexWeight: 4;
+        }
+    }
+
+    Group #WorldConfigButtons {
+        LayoutMode: Right;
+    }
+}

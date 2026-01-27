@@ -1,0 +1,6 @@
+$C = "Common.ui";
+
+$C.@TextButton #CloneBtn {
+    Text: "Clone";
+    Anchor: (Right: 10);
+}

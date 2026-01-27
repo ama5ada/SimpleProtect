@@ -9,10 +9,9 @@ repositories {
     mavenCentral()
 }
 
-
 dependencies {
     compileOnly(files("libs/HytaleServer.jar"))
-    compileOnly(files("libs/MoreEvents-1.0.jar"))
+    compileOnly(files("libs/MoreEvents-1.1.jar"))
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -25,6 +24,7 @@ tasks.test {
 tasks.jar {
     archiveBaseName.set("SimpleProtect")
 }
+
 
 val deployPlugin by tasks.registering(Copy::class) {
     dependsOn(tasks.jar)

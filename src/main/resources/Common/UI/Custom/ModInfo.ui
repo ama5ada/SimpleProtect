@@ -1,0 +1,31 @@
+Group #ModInfoPanel {
+    LayoutMode: Top;
+    FlexWeight: 10;
+
+    Label #ModInfoPrompt {
+        Padding: (Top: 5, Bottom: 5);
+        Style: (FontSize: 18);
+        Text: "Select a config on the left to edit Simple Protect settings.";
+    }
+    Label #ModInfoInform {
+        Style: (FontSize: 16);
+        Text: "If you cannot see any configs on the left, you do not have permission to manage any configs.";
+    }
+    Group #AdminPerm {
+        LayoutMode: Left;
+
+        Label #AdminPermString {
+            Style: (FontSize: 16, RenderBold: true);
+            Text: "coms.simpleprotect.administrate";
+        }
+
+        Label #AdminPermInfo {
+            Style: (FontSize: 16);
+            Text: " or OP is required to edit SimpleProtect configs.";
+        }
+    }
+    Label #FuturePerms {
+        Style: (FontSize: 16);
+        Text: "I plan to add world owners who will be able to edit their own configs.";
+    }
+}
