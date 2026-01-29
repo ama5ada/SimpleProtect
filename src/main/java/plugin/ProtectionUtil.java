@@ -217,6 +217,7 @@ public class ProtectionUtil {
                         String.format("[Simple Protect] Player %s has local bypass on World %s, allowing Event %s",
                                 playerUUID, worldName, event));
             }
+            return false;
         }
 
         // After all checks, the default is to protect

@@ -1,0 +1,15 @@
+$C = "Common.ui";
+
+TextButton #PlayerButton {
+    Padding: (Full: 5);
+    Style: TextButtonStyle(
+        Default: (
+            LabelStyle: (
+                FontSize: 16,
+                TextColor: #ffffffff
+            )
+        ),
+        Sounds: $C.@ButtonSounds
+    );
+    Text: "TEMPLATE";
+}

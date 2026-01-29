@@ -27,7 +27,7 @@ Group #EditWorldConfigPanel {
             FlexWeight: 1;
 
             Label #EnabledProtectionsTitle {
-                Text: "Enabled Protections";
+                Text: "Enabled Protections - Click to Toggle";
                 Style: (FontSize: 16, RenderBold: true);
             }
 
@@ -42,7 +42,7 @@ Group #EditWorldConfigPanel {
             FlexWeight: 1;
 
             Label #DisabledProtectionsTitle {
-                Text: "Disabled Protections";
+                Text: "Disabled Protections - Click to Toggle";
                 Style: (FontSize: 16, RenderBold: true);
             }
 
@@ -57,30 +57,54 @@ Group #EditWorldConfigPanel {
         LayoutMode: Top;
         FlexWeight: 1;
 
-        Label #AllowedPlayersTitle {
-            Text: "Allowed Players (Can bypass world protections)";
-            Padding: (Top: 5, Bottom: 5);
-        }
-
         Group #PlayerSearchGroup {
             LayoutMode: Left;
             FlexWeight: 1;
             TextField #PlayerSearchInput {
                 FlexWeight: 1;
                 Background: $C.@InputBoxBackground;
-                PlaceholderText: "Search for a player by UUID";
+                PlaceholderText: "Search by Player UUID";
                 Padding: (Left: 10, Right: 10);
             }
 
-            Group #PlayerSearchSpacer {
+            Group #PlayerAddSpacer {
+                LayoutMode: Right;
                 FlexWeight: 1;
+
+                $C.@TextButton #AddPlayerBtn {
+                    Text: "Add UUID";
+                    Anchor: (Right: 10);
+                }
             }
         }
 
-        Group #AllowedPlayers {
-            LayoutMode: Top;
-            FlexWeight: 4;
+        Label #AllowedPlayersTitle {
+            Text: "Allowed Players (Can bypass world protections)";
+            Padding: (Top: 5, Bottom: 5);
         }
+
+        Label #AllowedPlayersTip {
+            Text: "Click a UUID to remove permission";
+            Padding: (Top: 5, Bottom: 5);
+        }
+
+        Group #AllowedPlayersColumns {
+            LayoutMode: Left;
+            FlexWeight: 4;
+
+            Group #AllowedPlayers {
+                FlexWeight: 1;
+                LayoutMode: Top;
+                Anchor: (Top: 10);
+            }
+
+            Group #DisallowedPlayer {
+                FlexWeight: 1;
+                LayoutMode: Top;
+                Anchor: (Top: 10, Left: 5);
+            }
+        }
+
     }
 
     Group #WorldConfigButtons {

@@ -83,6 +83,10 @@ public class ConfigState {
         config.save();
     }
 
+    public SimpleProtectWorldConfig getDefaultWorldConfig() {
+        return getData().getDefaultWorldConfig();
+    }
+
     public void updateDefaultWorldConfig(SimpleProtectWorldConfig worldConfig) {
         getData().setDefaultConfig(worldConfig);
         config.save();

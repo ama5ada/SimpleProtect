@@ -92,8 +92,12 @@ public class PluginConfig {
         worlds.remove(target);
     }
 
-    public void updateDefaultConfig(SimpleProtectWorldConfig update) {
-        defaultWorldConfig = update;
+    public SimpleProtectWorldConfig getDefaultWorldConfig() {
+        return defaultWorldConfig;
+    }
+
+    public void setDefaultConfig(SimpleProtectWorldConfig config) {
+        defaultWorldConfig = config;
     }
 
     public void addWorld(String worldId) {

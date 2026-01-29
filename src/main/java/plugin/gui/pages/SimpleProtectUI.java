@@ -21,6 +21,7 @@ import plugin.types.SimpleProtectWorldConfig;
 import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.UUID;
 
 public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Data> {
     private enum PANEL_VIEW {
@@ -34,13 +35,14 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     private String worldSearch = "";
     private String currentWorld = "";
     private String nameForWorld = "";
+    private String playerSearch = "";
     private PANEL_VIEW currentPanelView = PANEL_VIEW.CLEAR;
     private static final String PANEL_ACTION = "PanelBtnClick";
     private static final String CONFIG_ACTION = "ConfigBtnClick";
     private static final String GLOBAL_CONFIG_UPDATE = "GlobalConfigUpdate";
     private static final String WORLD_CONFIG_UPDATE = "WorldConfigUpdate";
     private static final String PROTECTION_UPDATE = "ProtectionUpdate";
-    private static final String PLAYER_UPDATE = "PlayerUpdate";
+    private static final String PLAYER_ACTION = "PlayerClick";
     private final boolean canAdministrate;
 
     private boolean globalProtection = false;
@@ -52,7 +54,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     public SimpleProtectUI(@Nonnull PlayerRef playerRef, @Nonnull CustomPageLifetime lifetime) {
         super(playerRef, lifetime, Data.CODEC);
         this.canAdministrate = PermissionsModule.get().hasPermission(playerRef.getUuid(),
-                ConfigState.get().getPermission());
+                ConfigState.get().getAdministratePermission());
         if (canAdministrate) {
             syncGlobalSettings();
         }
@@ -65,7 +67,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     }
 
     private void syncConfigSettings() {
-        if (currentPanelView == PANEL_VIEW.EDIT_DEFAULT_WORLD) {
+        if (currentPanelView == PANEL_VIEW.EDIT_DEFAULT_WORLD || currentPanelView == PANEL_VIEW.CREATE_NEW_CONFIG) {
             currentConfig = new SimpleProtectWorldConfig(ConfigState.get().getDefaultWorldConfig());
         } else {
             currentConfig = new SimpleProtectWorldConfig(ConfigState.get().getWorldProtectionConfig(currentWorld));
@@ -86,10 +88,12 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 EventData.of("@WorldSearchInput", "#WorldSearchInput.Value"), false);
 
         // Render dynamic children for the first time
-        rebuildWorldListPanel(uiCommandBuilder, uiEventBuilder);
         rebuildMainConfigPanel(uiCommandBuilder, uiEventBuilder);
 
-        if (canAdministrate) buildAdminPanel(uiCommandBuilder, uiEventBuilder);
+        if (canAdministrate) {
+            buildAdminPanel(uiCommandBuilder, uiEventBuilder);
+            rebuildWorldListPanel(uiCommandBuilder, uiEventBuilder);
+        }
     }
 
     /**
@@ -129,6 +133,8 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         uiCommandBuilder.clear("#ConfigInfoBody");
         uiCommandBuilder.clear("#ExitPlaceholder");
 
+        playerSearch = "";
+
         switch (currentPanelView) {
             case CLEAR -> {
                 uiCommandBuilder.set("#InfoTitle.Text", " ");
@@ -140,29 +146,25 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 rebuildProtectionsPanel(uiCommandBuilder, uiEventBuilder);
             }
             case EDIT_DEFAULT_WORLD -> {
-                if (canAdministrate) {
-                    uiCommandBuilder.set("#InfoTitle.Text", "Editing the Default World config");
-                    uiCommandBuilder.set("#DefaultWorldBtn.Background", "#263047CC");
-                    buildDefaultEditPanel(uiCommandBuilder, uiEventBuilder);
-                    rebuildProtectionsPanel(uiCommandBuilder, uiEventBuilder);
-                }
+                uiCommandBuilder.set("#InfoTitle.Text", "Editing the Default World config");
+                uiCommandBuilder.set("#DefaultWorldBtn.Background", "#263047CC");
+                buildDefaultEditPanel(uiCommandBuilder, uiEventBuilder);
+                rebuildProtectionsPanel(uiCommandBuilder, uiEventBuilder);
             }
             case CREATE_NEW_CONFIG -> {
-                if (canAdministrate) {
-                    uiCommandBuilder.set("#InfoTitle.Text", "Create New World Config");
-                    uiCommandBuilder.set("#CreateConfigBtn.Background", "#263047CC");
-                    buildConfigCreatePanel(uiCommandBuilder, uiEventBuilder);
-                    rebuildProtectionsPanel(uiCommandBuilder, uiEventBuilder);
-                }
+                uiCommandBuilder.set("#InfoTitle.Text", "Create New World Config");
+                uiCommandBuilder.set("#CreateConfigBtn.Background", "#263047CC");
+                buildConfigCreatePanel(uiCommandBuilder, uiEventBuilder);
+                rebuildProtectionsPanel(uiCommandBuilder, uiEventBuilder);
             }
             case EDIT_GLOBAL_CONFIG -> {
-                if (canAdministrate) {
-                    uiCommandBuilder.set("#InfoTitle.Text", "Edit Global Config");
-                    uiCommandBuilder.set("#EditGlobalConfigBtn.Background", "#263047CC");
-                    buildEditGlobalConfigPanel(uiCommandBuilder, uiEventBuilder);
-                }
+                uiCommandBuilder.set("#InfoTitle.Text", "Edit Global Config");
+                uiCommandBuilder.set("#EditGlobalConfigBtn.Background", "#263047CC");
+                buildEditGlobalConfigPanel(uiCommandBuilder, uiEventBuilder);
             }
         }
+
+        uiCommandBuilder.set("#WorldSearchInput.Value", worldSearch);
 
         if (currentPanelView != PANEL_VIEW.CLEAR) {
             uiCommandBuilder.append("#ExitPlaceholder", "ExitPanelButton.ui");
@@ -200,12 +202,40 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         }
     }
 
+    private void rebuildPlayersPanel(UICommandBuilder uiCommandBuilder, UIEventBuilder uiEventBuilder) {
+        uiCommandBuilder.clear("#AllowedPlayers");
+
+        int i = 0;
+        for (UUID playerID : currentConfig.allowedPlayers) {
+            if (!playerSearch.isEmpty() && !playerID.toString().startsWith(playerSearch)) {
+                continue;
+            }
+            uiCommandBuilder.append("#AllowedPlayers", "PlayerButton.ui");
+            uiCommandBuilder.set("#AllowedPlayers[" + i + "].Text", playerID.toString());
+            uiCommandBuilder.set("#AllowedPlayers[" + i + "].Background", "#33FF0019");
+
+            uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#AllowedPlayers[" + i + "]",
+                    EventData.of(PLAYER_ACTION, playerID.toString()), false);
+            i++;
+        }
+
+        try {
+            UUID searchedId = UUID.fromString(playerSearch);
+            uiCommandBuilder.set("#AddPlayerBtn.Disabled", false);
+        } catch (Exception e) {
+            uiCommandBuilder.set("#AddPlayerBtn.Disabled", true);
+        }
+
+    }
+
     private void buildWorldEditPanel(UICommandBuilder uiCommandBuilder, UIEventBuilder uiEventBuilder) {
         uiCommandBuilder.append("#ConfigInfoBody", "EditWorldConfig.ui");
         uiCommandBuilder.append("#WorldConfigButtons", "DeleteButton.ui");
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#DeleteBtn",
                 EventData.of(CONFIG_ACTION, "DeleteBtn"), false);
         syncConfigSettings();
+        bindSharedWorldConfigEvents(uiEventBuilder);
+        rebuildPlayersPanel(uiCommandBuilder, uiEventBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
         bindSharedConfigButtons(uiEventBuilder);
         buildEditWorldConfigPanel(uiCommandBuilder, uiEventBuilder);
@@ -214,6 +244,8 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     private void buildDefaultEditPanel(UICommandBuilder uiCommandBuilder, UIEventBuilder uiEventBuilder) {
         uiCommandBuilder.append("#ConfigInfoBody", "EditWorldConfig.ui");
         syncConfigSettings();
+        bindSharedWorldConfigEvents(uiEventBuilder);
+        rebuildPlayersPanel(uiCommandBuilder, uiEventBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
         bindSharedConfigButtons(uiEventBuilder);
         buildEditWorldConfigPanel(uiCommandBuilder, uiEventBuilder);
@@ -225,6 +257,8 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#WorldNameInput",
                 EventData.of("@WorldNameInput", "#WorldNameInput.Value"), false);
         syncConfigSettings();
+        bindSharedWorldConfigEvents(uiEventBuilder);
+        rebuildPlayersPanel(uiCommandBuilder, uiEventBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
         bindSharedConfigButtons(uiEventBuilder);
         buildEditWorldConfigPanel(uiCommandBuilder, uiEventBuilder);
@@ -303,6 +337,13 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 EventData.of(PANEL_ACTION, "ExitPanelBtn"), false);
     }
 
+    private void bindSharedWorldConfigEvents(UIEventBuilder uiEventBuilder) {
+        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#PlayerSearchInput",
+                EventData.of("@PlayerSearchInput", "#PlayerSearchInput.Value"), false);
+        uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#AddPlayerBtn",
+                EventData.of(PLAYER_ACTION, "Add"), false);
+    }
+
     private void saveGlobalConfig() {
         if (canAdministrate) {
             ConfigState.get().updateGlobalConfig(globalProtection, notifyPlayer, verboseLogging);
@@ -346,6 +387,14 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
             nameForWorld = data.nameWorldUpdate;
             rebuildWorldListPanel(uiCommandBuilder, uiEventBuilder);
             sendUpdate(uiCommandBuilder, uiEventBuilder, false);
+            return;
+        }
+
+        if (data.playerNameUpdate != null) {
+            playerSearch = data.playerNameUpdate;
+            rebuildPlayersPanel(uiCommandBuilder, uiEventBuilder);
+            sendUpdate(uiCommandBuilder, uiEventBuilder, false);
+            return;
         }
 
         // Handle a change to the global config
@@ -355,6 +404,21 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 case "ToggleGlobalPlayerNotify" -> notifyPlayer = !notifyPlayer;
                 case "ToggleVerboseLogging" -> verboseLogging = !verboseLogging;
             }
+            rebuildEditGlobalConfigPanel(uiCommandBuilder);
+            sendUpdate(uiCommandBuilder, uiEventBuilder, false);
+            return;
+        }
+
+        if (data.playerUpdate != null) {
+            if (data.playerUpdate.equals("Add")) {
+                UUID playerUUID = UUID.fromString(playerSearch);
+                currentConfig.allowedPlayers.add(playerUUID);
+            } else {
+                UUID playerUUID = UUID.fromString(data.playerUpdate);
+                currentConfig.allowedPlayers.remove(playerUUID);
+            }
+            rebuildPlayersPanel(uiCommandBuilder, uiEventBuilder);
+            sendUpdate(uiCommandBuilder, uiEventBuilder, false);
             return;
         }
 
@@ -376,6 +440,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 case "ToggleWorldNotify" -> currentConfig.notifyPlayer = !currentConfig.notifyPlayer;
             }
             rebuildEditWorldConfigPanel(uiCommandBuilder);
+            sendUpdate(uiCommandBuilder, uiEventBuilder, false);
             return;
         }
 
@@ -400,6 +465,10 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                         }
                         case "DeleteBtn" -> {
                             deleteWorldConfig();
+                            currentPanelView = PANEL_VIEW.CLEAR;
+                            worldSearch = "";
+                            currentWorld = "";
+                            rebuildMainConfigPanel(uiCommandBuilder, uiEventBuilder);
                         }
                     }
                 }
@@ -407,6 +476,21 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                     switch (data.configAction) {
                         case "SaveBtn" -> {
                             currentWorld = nameForWorld;
+                            currentPanelView = PANEL_VIEW.EDIT_WORLD;
+                            saveWorldConfig();
+                            rebuildMainConfigPanel(uiCommandBuilder, uiEventBuilder);
+                            rebuildAdminPanel(uiCommandBuilder);
+                        }
+                        case "LoadBtn" -> {
+                            syncConfigSettings();
+                            rebuildProtectionsPanel(uiCommandBuilder, uiEventBuilder);
+                            rebuildEditWorldConfigPanel(uiCommandBuilder);
+                        }
+                    }
+                }
+                case PANEL_VIEW.EDIT_DEFAULT_WORLD -> {
+                    switch (data.configAction) {
+                        case "SaveBtn" -> {
                             saveWorldConfig();
                         }
                         case "LoadBtn" -> {
@@ -417,6 +501,9 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                     }
                 }
             }
+            rebuildWorldListPanel(uiCommandBuilder, uiEventBuilder);
+            sendUpdate(uiCommandBuilder, uiEventBuilder, false);
+            return;
         }
 
         if (data.clicked != null) {
@@ -462,12 +549,15 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 .append(new KeyedCodec<>(PROTECTION_UPDATE, Codec.STRING),
                         (data, value) -> data.protectionUpdate = value,
                         data -> data.protectionUpdate).add()
-                .append(new KeyedCodec<>(PLAYER_UPDATE, Codec.STRING),
+                .append(new KeyedCodec<>(PLAYER_ACTION, Codec.STRING),
                         (data, value) -> data.playerUpdate = value,
                         data -> data.playerUpdate).add()
                 .append(new KeyedCodec<>("@WorldNameInput", Codec.STRING),
                         (data, value) -> data.nameWorldUpdate = value,
                         data -> data.nameWorldUpdate).add()
+                .append(new KeyedCodec<>("@PlayerSearchInput", Codec.STRING),
+                        (data, value) -> data.playerNameUpdate = value,
+                        data -> data.playerNameUpdate).add()
                 .build();
 
         private String search;
@@ -478,5 +568,6 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         private String protectionUpdate;
         private String playerUpdate;
         private String nameWorldUpdate;
+        private String playerNameUpdate;
     }
 }
