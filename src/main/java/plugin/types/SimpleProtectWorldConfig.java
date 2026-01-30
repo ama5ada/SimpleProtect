@@ -10,7 +10,10 @@ public class SimpleProtectWorldConfig {
     public boolean protectionEnabled = true;
     public boolean notifyPlayer = true;
     public EnumSet<EVENT_TYPE> enabledProtections = EnumSet.allOf(EVENT_TYPE.class);
-    public Set<UUID> allowedPlayers = new HashSet<>();
+    public Set<UUID> members = new HashSet<>();
+    public Set<UUID> moderators = new HashSet<>();
+    public Set<UUID> administrators = new HashSet<>();
+    public UUID owner;
 
     public static final BuilderCodec<SimpleProtectWorldConfig> CODEC =
             BuilderCodec.builder(SimpleProtectWorldConfig.class, SimpleProtectWorldConfig::new)
@@ -38,37 +41,60 @@ public class SimpleProtectWorldConfig {
                                     .toArray(String[]::new)
                     ).add()
                     .append(
-                            new KeyedCodec<>("AllowedPlayers", Codec.STRING_ARRAY),
+                            new KeyedCodec<>("Members", Codec.STRING_ARRAY),
                             (cfg, val) -> {
                                 Set<UUID> set = new HashSet<>();
                                 for (String s : val) {
                                     set.add(UUID.fromString(s));
                                 }
-                                cfg.allowedPlayers = set;
+                                cfg.members = set;
                             },
-                            cfg -> cfg.allowedPlayers.stream()
+                            cfg -> cfg.members.stream()
                                     .map(UUID::toString)
                                     .toArray(String[]::new)
                     ).add()
+                    .append(
+                            new KeyedCodec<>("Moderators", Codec.STRING_ARRAY),
+                            (cfg, val) -> {
+                                Set<UUID> set = new HashSet<>();
+                                for (String s : val) {
+                                    set.add(UUID.fromString(s));
+                                }
+                                cfg.moderators = set;
+                            },
+                            cfg -> cfg.moderators.stream()
+                                    .map(UUID::toString)
+                                    .toArray(String[]::new)
+                    ).add()
+                    .append(
+                            new KeyedCodec<>("Administrators", Codec.STRING_ARRAY),
+                            (cfg, val) -> {
+                                Set<UUID> set = new HashSet<>();
+                                for (String s : val) {
+                                    set.add(UUID.fromString(s));
+                                }
+                                cfg.administrators = set;
+                            },
+                            cfg -> cfg.administrators.stream()
+                                    .map(UUID::toString)
+                                    .toArray(String[]::new)
+                    ).add()
+                    .append(
+                            new KeyedCodec<>("Owner", Codec.STRING),
+                            (cfg, val) -> cfg.owner = UUID.fromString(val),
+                            cfg -> cfg.owner != null ? cfg.owner.toString() : ""
+                    ).add()
                     .build();
 
-    public void applyDefaults(SimpleProtectWorldConfig defaults) {
-        if (enabledProtections.isEmpty()) {
-            enabledProtections.addAll(defaults.enabledProtections);
-        }
-        if (allowedPlayers.isEmpty()) {
-            allowedPlayers.addAll(defaults.allowedPlayers);
-        }
-
-        protectionEnabled = protectionEnabled || defaults.protectionEnabled;
-        notifyPlayer = notifyPlayer || defaults.notifyPlayer;
-    }
-
     public SimpleProtectWorldConfig(SimpleProtectWorldConfig target) {
-        this.protectionEnabled = target.protectionEnabled;
-        this.notifyPlayer = target.notifyPlayer;
-        this.enabledProtections = target.enabledProtections.clone();
-        this.allowedPlayers = new HashSet<>(target.allowedPlayers);
+        protectionEnabled = target.protectionEnabled;
+        notifyPlayer = target.notifyPlayer;
+
+        enabledProtections = target.enabledProtections != null ? target.enabledProtections.clone() : EnumSet.noneOf(EVENT_TYPE.class);
+        members = target.members != null ? new HashSet<>(target.members) : new HashSet<>();
+        moderators = target.moderators != null ? new HashSet<>(target.moderators) : new HashSet<>();
+        administrators = target.administrators != null ? new HashSet<>(target.administrators) : new HashSet<>();
+        owner = target.owner;
     }
 
     public SimpleProtectWorldConfig() {}
