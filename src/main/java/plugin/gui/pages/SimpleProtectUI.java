@@ -216,7 +216,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
             String displayName = UUIDCache.get().getNameFromUUID(playerID);
             String displayString;
             if (displayName != null) {
-                displayString = String.format("%s:%s", displayName, playerID.toString());
+                displayString = displayName;
             } else {
                 displayString = playerID.toString();
                 misses.add(i);
@@ -250,8 +250,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                     String displayName = dbResults.get(uuid);
                     if (displayName != null) {
                         UUIDCache.get().putPlayerInfo(uuid, displayName);
-                        dynamicBuilder.set("#AllowedPlayers[" + uiIndex + "].Text",
-                                String.format("%s:%s", displayName, uuid));
+                        dynamicBuilder.set("#AllowedPlayers[" + uiIndex + "].Text", displayName);
                     }
                 }
 
@@ -260,7 +259,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         }
     }
 
-    private void rebuildDisallowedPlayersPanel(UICommandBuilder uiCommandBuilder, UIEventBuilder uiEventBuilder) {
+    private void rebuildDisallowedPlayersPanel(UICommandBuilder uiCommandBuilder) {
         uiCommandBuilder.clear("#DisallowedPlayers");
 
         PlayerInfoDB.queryPlayersAsync(playerSearch, dbResults -> {
@@ -282,15 +281,15 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
             for (Map.Entry<UUID, String> entry : UUIDCache.get().getEntries()) {
                 UUID uuid = entry.getKey();
                 String displayName = entry.getValue();
-                if (!playerSearch.isEmpty() && !displayName.startsWith(playerSearch)) {
+                if (currentConfig.allowedPlayers.contains(uuid) || (!playerSearch.isEmpty() && !displayName.toLowerCase().startsWith(playerSearch))) {
                     continue;
                 }
 
-                uiCommandBuilder.append("#DisallowedPlayers", "PlayerButton.ui");
-                uiCommandBuilder.set("#DisallowedPlayers[" + i + "].Text", uuid.toString());
-                uiCommandBuilder.set("#DisallowedPlayers[" + i + "].Background", "#33FF0019");
+                dynamicBuilder.append("#DisallowedPlayers", "PlayerButton.ui");
+                dynamicBuilder.set("#DisallowedPlayers[" + i + "].Text", displayName);
+                dynamicBuilder.set("#DisallowedPlayers[" + i + "].Background", "#FF000019");
 
-                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#AllowedPlayers[" + i + "]",
+                dynamicEvents.addEventBinding(CustomUIEventBindingType.Activating, "#DisallowedPlayers[" + i + "]",
                         EventData.of(PLAYER_ACTION, uuid.toString()), false);
                 i++;
             }
@@ -307,6 +306,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         syncConfigSettings();
         bindSharedWorldConfigEvents(uiEventBuilder);
         rebuildAllowedPlayersPanel(uiCommandBuilder, uiEventBuilder);
+        rebuildDisallowedPlayersPanel(uiCommandBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
         bindSharedConfigButtons(uiEventBuilder);
         buildEditWorldConfigPanel(uiCommandBuilder, uiEventBuilder);
@@ -317,6 +317,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         syncConfigSettings();
         bindSharedWorldConfigEvents(uiEventBuilder);
         rebuildAllowedPlayersPanel(uiCommandBuilder, uiEventBuilder);
+        rebuildDisallowedPlayersPanel(uiCommandBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
         bindSharedConfigButtons(uiEventBuilder);
         buildEditWorldConfigPanel(uiCommandBuilder, uiEventBuilder);
@@ -330,6 +331,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         syncConfigSettings();
         bindSharedWorldConfigEvents(uiEventBuilder);
         rebuildAllowedPlayersPanel(uiCommandBuilder, uiEventBuilder);
+        rebuildDisallowedPlayersPanel(uiCommandBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
         bindSharedConfigButtons(uiEventBuilder);
         buildEditWorldConfigPanel(uiCommandBuilder, uiEventBuilder);
@@ -466,6 +468,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         if (data.playerNameUpdate != null) {
             playerSearch = data.playerNameUpdate;
             rebuildAllowedPlayersPanel(uiCommandBuilder, uiEventBuilder);
+            rebuildDisallowedPlayersPanel(uiCommandBuilder);
             return;
         }
 
@@ -496,6 +499,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 currentConfig.allowedPlayers.add(playerUUID);
             }
             rebuildAllowedPlayersPanel(uiCommandBuilder, uiEventBuilder);
+            rebuildDisallowedPlayersPanel(uiCommandBuilder);
             return;
         }
 

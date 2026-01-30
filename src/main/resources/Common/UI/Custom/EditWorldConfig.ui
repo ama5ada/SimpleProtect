@@ -5,6 +5,7 @@ Group #EditWorldConfigPanel {
 
     Group #WorldFields {
         LayoutMode: Top;
+        FlexWeight: 2;
 
         $C.@CheckBoxWithLabel #WorldProtection {
             @Text = "World Protection - Toggle Simple Protect for this world.";
@@ -19,8 +20,7 @@ Group #EditWorldConfigPanel {
 
     Group #ProtectionSettings {
         LayoutMode: Left;
-        FlexWeight: 1;
-        Anchor: (Top: 5, Bottom: 25);
+        FlexWeight: 5;
 
         Group #EnabledProtectionPanel {
             LayoutMode: Top;
@@ -34,6 +34,11 @@ Group #EditWorldConfigPanel {
             Group #EnabledProtections {
                 LayoutMode: TopScrolling;
                 ScrollbarStyle: $C.@DefaultScrollbarStyle;
+                FlexWeight: 1;
+            }
+
+            Group #Spacer {
+                Anchor: (Height: 5);
             }
         }
 
@@ -49,17 +54,19 @@ Group #EditWorldConfigPanel {
             Group #DisabledProtections {
                 LayoutMode: TopScrolling;
                 ScrollbarStyle: $C.@DefaultScrollbarStyle;
+                FlexWeight: 1;
             }
         }
     }
 
     Group #AllowedPlayersPanel {
         LayoutMode: Top;
-        FlexWeight: 2;
+        FlexWeight: 8;
+        Anchor: (Bottom: 5);
 
         Group #PlayerInputsGroup {
             LayoutMode: Left;
-            Anchor: (Top: 10, Height: 32);
+            Anchor: (Height: 32);
 
             TextField #PlayerSearchInput {
                 FlexWeight: 1;
@@ -86,7 +93,7 @@ Group #EditWorldConfigPanel {
 
         Group #PlayerColumns {
             LayoutMode: Left;
-            FlexWeight: 9;
+            FlexWeight: 1;
 
             Group #AllowedPlayersColumn {
                 LayoutMode: Top;
@@ -100,6 +107,7 @@ Group #EditWorldConfigPanel {
                 Group #AllowedPlayers {
                     LayoutMode: TopScrolling;
                     ScrollbarStyle: $C.@DefaultScrollbarStyle;
+                    FlexWeight: 1;
                 }
             }
 
@@ -115,6 +123,7 @@ Group #EditWorldConfigPanel {
                 Group #DisallowedPlayers {
                     LayoutMode: TopScrolling;
                     ScrollbarStyle: $C.@DefaultScrollbarStyle;
+                    FlexWeight: 1;
                 }
             }
         }
