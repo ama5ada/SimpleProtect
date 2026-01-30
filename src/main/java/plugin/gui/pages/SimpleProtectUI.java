@@ -15,13 +15,14 @@ import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import plugin.ConfigState;
+import plugin.UUIDCache;
+import plugin.db.PlayerInfoDB;
 import plugin.types.EVENT_TYPE;
 import plugin.types.SimpleProtectWorldConfig;
 
 import javax.annotation.Nonnull;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.UUID;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Data> {
     private enum PANEL_VIEW {
@@ -36,6 +37,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     private String currentWorld = "";
     private String nameForWorld = "";
     private String playerSearch = "";
+    private String uuidInput = "";
     private PANEL_VIEW currentPanelView = PANEL_VIEW.CLEAR;
     private static final String PANEL_ACTION = "PanelBtnClick";
     private static final String CONFIG_ACTION = "ConfigBtnClick";
@@ -43,6 +45,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     private static final String WORLD_CONFIG_UPDATE = "WorldConfigUpdate";
     private static final String PROTECTION_UPDATE = "ProtectionUpdate";
     private static final String PLAYER_ACTION = "PlayerClick";
+    private static final String UUID_ACTION = "UUIDClick";
     private final boolean canAdministrate;
 
     private boolean globalProtection = false;
@@ -202,16 +205,30 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         }
     }
 
-    private void rebuildPlayersPanel(UICommandBuilder uiCommandBuilder, UIEventBuilder uiEventBuilder) {
+    private void rebuildAllowedPlayersPanel(UICommandBuilder uiCommandBuilder, UIEventBuilder uiEventBuilder) {
         uiCommandBuilder.clear("#AllowedPlayers");
+        List<Integer> misses = new ArrayList<>();
+        List<UUID> missedIds = new ArrayList<>();
+        String compare = playerSearch.toLowerCase();
 
         int i = 0;
         for (UUID playerID : currentConfig.allowedPlayers) {
-            if (!playerSearch.isEmpty() && !playerID.toString().startsWith(playerSearch)) {
+            String displayName = UUIDCache.get().getNameFromUUID(playerID);
+            String displayString;
+            if (displayName != null) {
+                displayString = String.format("%s:%s", displayName, playerID.toString());
+            } else {
+                displayString = playerID.toString();
+                misses.add(i);
+                missedIds.add(playerID);
+            }
+
+            if (displayName != null && !playerSearch.isEmpty() && !displayName.toLowerCase().startsWith(compare)) {
                 continue;
             }
+
             uiCommandBuilder.append("#AllowedPlayers", "PlayerButton.ui");
-            uiCommandBuilder.set("#AllowedPlayers[" + i + "].Text", playerID.toString());
+            uiCommandBuilder.set("#AllowedPlayers[" + i + "].Text", displayString);
             uiCommandBuilder.set("#AllowedPlayers[" + i + "].Background", "#33FF0019");
 
             uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#AllowedPlayers[" + i + "]",
@@ -219,13 +236,67 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
             i++;
         }
 
-        try {
-            UUID searchedId = UUID.fromString(playerSearch);
-            uiCommandBuilder.set("#AddPlayerBtn.Disabled", false);
-        } catch (Exception e) {
-            uiCommandBuilder.set("#AddPlayerBtn.Disabled", true);
-        }
+        sendUpdate(uiCommandBuilder, uiEventBuilder, false);
 
+        if (!missedIds.isEmpty()) {
+            PlayerInfoDB.queryPlayersByUUIDsAsync(missedIds, dbResults -> {
+                UICommandBuilder dynamicBuilder = new UICommandBuilder();
+                UIEventBuilder dynamicEvents = new UIEventBuilder();
+
+                for (int j = 0; j < missedIds.size(); j++) {
+                    UUID uuid = missedIds.get(j);
+                    int uiIndex = misses.get(j);
+
+                    String displayName = dbResults.get(uuid);
+                    if (displayName != null) {
+                        UUIDCache.get().putPlayerInfo(uuid, displayName);
+                        dynamicBuilder.set("#AllowedPlayers[" + uiIndex + "].Text",
+                                String.format("%s:%s", displayName, uuid));
+                    }
+                }
+
+                sendUpdate(dynamicBuilder, dynamicEvents, false);
+            });
+        }
+    }
+
+    private void rebuildDisallowedPlayersPanel(UICommandBuilder uiCommandBuilder, UIEventBuilder uiEventBuilder) {
+        uiCommandBuilder.clear("#DisallowedPlayers");
+
+        PlayerInfoDB.queryPlayersAsync(playerSearch, dbResults -> {
+            UICommandBuilder dynamicBuilder = new UICommandBuilder();
+            UIEventBuilder dynamicEvents = new UIEventBuilder();
+
+            for (Map.Entry<UUID, String> entry : dbResults.entrySet()) {
+                UUID uuid = entry.getKey();
+                String displayName = entry.getValue();
+
+                // Cache miss add an entry
+                if (UUIDCache.get().getNameFromUUID(uuid) == null) {
+                    UUIDCache.get().putPlayerInfo(uuid, displayName);
+                }
+            }
+
+            // Iterate over the cache keys
+            int i = 0;
+            for (Map.Entry<UUID, String> entry : UUIDCache.get().getEntries()) {
+                UUID uuid = entry.getKey();
+                String displayName = entry.getValue();
+                if (!playerSearch.isEmpty() && !displayName.startsWith(playerSearch)) {
+                    continue;
+                }
+
+                uiCommandBuilder.append("#DisallowedPlayers", "PlayerButton.ui");
+                uiCommandBuilder.set("#DisallowedPlayers[" + i + "].Text", uuid.toString());
+                uiCommandBuilder.set("#DisallowedPlayers[" + i + "].Background", "#33FF0019");
+
+                uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#AllowedPlayers[" + i + "]",
+                        EventData.of(PLAYER_ACTION, uuid.toString()), false);
+                i++;
+            }
+
+            sendUpdate(dynamicBuilder, dynamicEvents, false);
+        });
     }
 
     private void buildWorldEditPanel(UICommandBuilder uiCommandBuilder, UIEventBuilder uiEventBuilder) {
@@ -235,7 +306,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 EventData.of(CONFIG_ACTION, "DeleteBtn"), false);
         syncConfigSettings();
         bindSharedWorldConfigEvents(uiEventBuilder);
-        rebuildPlayersPanel(uiCommandBuilder, uiEventBuilder);
+        rebuildAllowedPlayersPanel(uiCommandBuilder, uiEventBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
         bindSharedConfigButtons(uiEventBuilder);
         buildEditWorldConfigPanel(uiCommandBuilder, uiEventBuilder);
@@ -245,7 +316,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         uiCommandBuilder.append("#ConfigInfoBody", "EditWorldConfig.ui");
         syncConfigSettings();
         bindSharedWorldConfigEvents(uiEventBuilder);
-        rebuildPlayersPanel(uiCommandBuilder, uiEventBuilder);
+        rebuildAllowedPlayersPanel(uiCommandBuilder, uiEventBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
         bindSharedConfigButtons(uiEventBuilder);
         buildEditWorldConfigPanel(uiCommandBuilder, uiEventBuilder);
@@ -258,7 +329,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 EventData.of("@WorldNameInput", "#WorldNameInput.Value"), false);
         syncConfigSettings();
         bindSharedWorldConfigEvents(uiEventBuilder);
-        rebuildPlayersPanel(uiCommandBuilder, uiEventBuilder);
+        rebuildAllowedPlayersPanel(uiCommandBuilder, uiEventBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
         bindSharedConfigButtons(uiEventBuilder);
         buildEditWorldConfigPanel(uiCommandBuilder, uiEventBuilder);
@@ -340,8 +411,10 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     private void bindSharedWorldConfigEvents(UIEventBuilder uiEventBuilder) {
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#PlayerSearchInput",
                 EventData.of("@PlayerSearchInput", "#PlayerSearchInput.Value"), false);
-        uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#AddPlayerBtn",
-                EventData.of(PLAYER_ACTION, "Add"), false);
+        uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#UUIDInput",
+                EventData.of("@UUIDInput", "#UUIDInput.Value"), false);
+        uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#AddUUIDBtn",
+                EventData.of(UUID_ACTION, "Add"), false);
     }
 
     private void saveGlobalConfig() {
@@ -392,7 +465,13 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
 
         if (data.playerNameUpdate != null) {
             playerSearch = data.playerNameUpdate;
-            rebuildPlayersPanel(uiCommandBuilder, uiEventBuilder);
+            rebuildAllowedPlayersPanel(uiCommandBuilder, uiEventBuilder);
+            return;
+        }
+
+        if (data.uuidUpdate != null) {
+            uuidInput = data.uuidUpdate;
+            uiCommandBuilder.set("#AddUUIDBtn.Disabled", !validateUUID(uuidInput));
             sendUpdate(uiCommandBuilder, uiEventBuilder, false);
             return;
         }
@@ -410,14 +489,19 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         }
 
         if (data.playerUpdate != null) {
-            if (data.playerUpdate.equals("Add")) {
-                UUID playerUUID = UUID.fromString(playerSearch);
-                currentConfig.allowedPlayers.add(playerUUID);
-            } else {
-                UUID playerUUID = UUID.fromString(data.playerUpdate);
+            UUID playerUUID = UUID.fromString(data.playerUpdate);
+            if (currentConfig.allowedPlayers.contains(playerUUID)) {
                 currentConfig.allowedPlayers.remove(playerUUID);
+            } else {
+                currentConfig.allowedPlayers.add(playerUUID);
             }
-            rebuildPlayersPanel(uiCommandBuilder, uiEventBuilder);
+            rebuildAllowedPlayersPanel(uiCommandBuilder, uiEventBuilder);
+            return;
+        }
+
+        if (data.uuidAction != null) {
+            UUID playerUUID = UUID.fromString(uuidInput);
+            currentConfig.allowedPlayers.add(playerUUID);
             sendUpdate(uiCommandBuilder, uiEventBuilder, false);
             return;
         }
@@ -558,6 +642,12 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 .append(new KeyedCodec<>("@PlayerSearchInput", Codec.STRING),
                         (data, value) -> data.playerNameUpdate = value,
                         data -> data.playerNameUpdate).add()
+                .append(new KeyedCodec<>("@UUIDInput", Codec.STRING),
+                        (data, value) -> data.uuidUpdate = value,
+                        data -> data.uuidUpdate).add()
+                .append(new KeyedCodec<>(UUID_ACTION, Codec.STRING),
+                        (data, value) -> data.uuidAction = value,
+                        data -> data.uuidAction).add()
                 .build();
 
         private String search;
@@ -569,5 +659,20 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         private String playerUpdate;
         private String nameWorldUpdate;
         private String playerNameUpdate;
+        private String uuidUpdate;
+        private String uuidAction;
+    }
+
+    private static boolean validateUUID(String uuid) {
+        if (uuid == null) {
+            return false;
+        }
+
+        try {
+            UUID.fromString(uuid);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 }

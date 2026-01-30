@@ -55,56 +55,69 @@ Group #EditWorldConfigPanel {
 
     Group #AllowedPlayersPanel {
         LayoutMode: Top;
-        FlexWeight: 1;
+        FlexWeight: 2;
 
-        Group #PlayerSearchGroup {
+        Group #PlayerInputsGroup {
             LayoutMode: Left;
-            FlexWeight: 1;
+            Anchor: (Top: 10, Height: 32);
+
             TextField #PlayerSearchInput {
                 FlexWeight: 1;
                 Background: $C.@InputBoxBackground;
-                PlaceholderText: "Search by Player UUID";
+                PlaceholderText: "Filter by Player Name";
                 Padding: (Left: 10, Right: 10);
+                Anchor: (Right: 5);
             }
 
-            Group #PlayerAddSpacer {
-                LayoutMode: Right;
+            TextField #UUIDInput {
+                FlexWeight: 1;
+                Background: $C.@InputBoxBackground;
+                PlaceholderText: "Add by UUID";
+                Padding: (Left: 10, Right: 10);
+                Anchor: (Right: 5);
+            }
+
+            $C.@TextButton #AddUUIDBtn {
+                Text: "Add UUID";
+                Anchor: (Height: 32);
+                Disabled: true;
+            }
+        }
+
+        Group #PlayerColumns {
+            LayoutMode: Left;
+            FlexWeight: 9;
+
+            Group #AllowedPlayersColumn {
+                LayoutMode: Top;
                 FlexWeight: 1;
 
-                $C.@TextButton #AddPlayerBtn {
-                    Text: "Add UUID";
-                    Anchor: (Right: 10);
+                Label #AllowedPlayersTitle {
+                    Text: "Allowed Players (Bypass world protections)";
+                    Padding: (Top: 5, Bottom: 5);
+                }
+
+                Group #AllowedPlayers {
+                    LayoutMode: TopScrolling;
+                    ScrollbarStyle: $C.@DefaultScrollbarStyle;
+                }
+            }
+
+            Group #DisallowedPlayersColumn {
+                LayoutMode: Top;
+                FlexWeight: 1;
+
+                Label #DisallowedPlayersTitle {
+                    Text: "Disallowed Players (Protections apply)";
+                    Padding: (Top: 5, Bottom: 5);
+                }
+
+                Group #DisallowedPlayers {
+                    LayoutMode: TopScrolling;
+                    ScrollbarStyle: $C.@DefaultScrollbarStyle;
                 }
             }
         }
-
-        Label #AllowedPlayersTitle {
-            Text: "Allowed Players (Can bypass world protections)";
-            Padding: (Top: 5, Bottom: 5);
-        }
-
-        Label #AllowedPlayersTip {
-            Text: "Click a UUID to remove permission";
-            Padding: (Top: 5, Bottom: 5);
-        }
-
-        Group #AllowedPlayersColumns {
-            LayoutMode: Left;
-            FlexWeight: 4;
-
-            Group #AllowedPlayers {
-                FlexWeight: 1;
-                LayoutMode: Top;
-                Anchor: (Top: 10);
-            }
-
-            Group #DisallowedPlayer {
-                FlexWeight: 1;
-                LayoutMode: Top;
-                Anchor: (Top: 10, Left: 5);
-            }
-        }
-
     }
 
     Group #WorldConfigButtons {

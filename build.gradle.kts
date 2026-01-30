@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "org.example"
-version = "1.1"
+version = "1.2"
 
 repositories {
     mavenCentral()
@@ -12,6 +12,7 @@ repositories {
 dependencies {
     compileOnly(files("libs/HytaleServer.jar"))
     compileOnly(files("libs/MoreEvents-1.1.jar"))
+    compileOnly(files("libs/UUIDCache-1.0.jar"))
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
