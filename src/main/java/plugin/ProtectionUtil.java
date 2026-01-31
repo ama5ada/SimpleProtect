@@ -3,12 +3,11 @@ package plugin;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.Message;
-import com.hypixel.hytale.server.core.entity.EntitySnapshot;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import plugin.types.EVENT_TYPE;
-import plugin.types.SimpleProtectWorldConfig;
+import plugin.config.SimpleProtectWorldConfig;
 
 import java.util.Set;
 import java.util.UUID;
@@ -127,7 +126,7 @@ public class ProtectionUtil {
         }
 
         // See if the player has a local bypass permission
-        boolean localBypass = currentConfig.allowedPlayers.contains(playerUUID);
+        boolean localBypass = currentConfig.members.contains(playerUUID);
         if (localBypass) {
             if (verboseLogging) {
                 getLogger().info(
@@ -208,7 +207,7 @@ public class ProtectionUtil {
             return false;
         }
 
-        boolean localBypass = currentConfig.allowedPlayers.contains(playerUUID);
+        boolean localBypass = currentConfig.members.contains(playerUUID);
 
         // See if the player has permissions to bypass local rules
         if (localBypass) {

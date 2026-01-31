@@ -1,9 +1,7 @@
 package plugin;
 
 import com.hypixel.hytale.server.core.util.Config;
-import plugin.types.SimpleProtectWorldConfig;
-
-import java.util.List;
+import plugin.config.SimpleProtectWorldConfig;
 
 public class ConfigState {
 

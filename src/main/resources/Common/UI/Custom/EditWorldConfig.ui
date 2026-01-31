@@ -91,6 +91,53 @@ Group #EditWorldConfigPanel {
             }
         }
 
+        Group #PlayerGroupSelect {
+            LayoutMode: Left;
+
+            TextButton #MemberButton {
+                Padding: (Full: 5);
+                Style: TextButtonStyle(
+                    Default: (
+                        LabelStyle: (
+                            FontSize: 16,
+                            TextColor: #ffffffff
+                        )
+                    ),
+                    Sounds: $C.@ButtonSounds
+                );
+                Text: "TEMPLATE";
+            }
+
+            TextButton #ModeratorButton {
+                Padding: (Full: 5);
+                Style: TextButtonStyle(
+                    Default: (
+                        LabelStyle: (
+                            FontSize: 16,
+                            TextColor: #ffffffff
+                        )
+                    ),
+                    Sounds: $C.@ButtonSounds
+                );
+                Text: "TEMPLATE";
+            }
+
+            TextButton #AdministratorButton {
+                Padding: (Full: 5);
+                Style: TextButtonStyle(
+                    Default: (
+                        LabelStyle: (
+                            FontSize: 16,
+                            TextColor: #ffffffff
+                        )
+                    ),
+                    Sounds: $C.@ButtonSounds
+                );
+                Text: "TEMPLATE";
+            }
+
+        }
+
         Group #PlayerColumns {
             LayoutMode: Left;
             FlexWeight: 1;

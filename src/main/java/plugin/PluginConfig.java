@@ -4,7 +4,7 @@ import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.codec.codecs.map.MapCodec;
-import plugin.types.SimpleProtectWorldConfig;
+import plugin.config.SimpleProtectWorldConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,8 +29,7 @@ public class PluginConfig {
 
         this.worlds.entrySet().removeIf(entry -> entry.getKey() == null);
         if (this.worlds.isEmpty()) {
-            SimpleProtectWorldConfig copyDefault = new SimpleProtectWorldConfig();
-            copyDefault.applyDefaults(defaultWorldConfig);
+            SimpleProtectWorldConfig copyDefault = new SimpleProtectWorldConfig(defaultWorldConfig);
             this.worlds.put("default", copyDefault);
             return true;
         }
@@ -74,16 +73,6 @@ public class PluginConfig {
     public void setNotifyPlayer(boolean value) { this.notifyPlayer = value; }
     public void setVerbose(boolean value) { this.verbose = value; }
 
-    public void setWorlds(Map<String, SimpleProtectWorldConfig> worlds) {
-        if (worlds == null) {
-            worlds = new HashMap<String, SimpleProtectWorldConfig>();
-            worlds.put("default", new SimpleProtectWorldConfig());
-        }
-        worlds.entrySet().removeIf(entry -> entry.getKey() == null);
-        worlds.forEach((worldId, worldCfg) -> worldCfg.applyDefaults(this.defaultWorldConfig));
-        this.worlds = worlds;
-    }
-
     public void setWorld(String target, SimpleProtectWorldConfig update) {
         worlds.put(target, update);
     }
@@ -98,11 +87,5 @@ public class PluginConfig {
 
     public void setDefaultConfig(SimpleProtectWorldConfig config) {
         defaultWorldConfig = config;
-    }
-
-    public void addWorld(String worldId) {
-        SimpleProtectWorldConfig config = new SimpleProtectWorldConfig();
-        config.applyDefaults(this.defaultWorldConfig);
-        this.worlds.put(worldId, config);
     }
 }
