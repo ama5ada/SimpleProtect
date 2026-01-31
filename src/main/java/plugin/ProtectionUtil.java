@@ -8,9 +8,9 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import plugin.types.EVENT_TYPE;
 import plugin.config.SimpleProtectWorldConfig;
+import plugin.types.PLAYER_ROLE;
 
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static com.hypixel.hytale.builtin.hytalegenerator.LoggerUtil.getLogger;
 
@@ -125,8 +125,8 @@ public class ProtectionUtil {
             return false;
         }
 
-        // See if the player has a local bypass permission
-        boolean localBypass = currentConfig.members.contains(playerUUID);
+        boolean localBypass = hasLocalBypass(currentConfig, playerUUID);
+
         if (localBypass) {
             if (verboseLogging) {
                 getLogger().info(
@@ -207,7 +207,7 @@ public class ProtectionUtil {
             return false;
         }
 
-        boolean localBypass = currentConfig.members.contains(playerUUID);
+        boolean localBypass = hasLocalBypass(currentConfig, playerUUID);
 
         // See if the player has permissions to bypass local rules
         if (localBypass) {
@@ -233,5 +233,10 @@ public class ProtectionUtil {
             ));
         }
         return true;
+    }
+
+    private static boolean hasLocalBypass(SimpleProtectWorldConfig config, UUID playerUUID) {
+        return config.members.contains(playerUUID) || config.moderators.contains(playerUUID) ||
+                config.administrators.contains(playerUUID) || config.owner == playerUUID;
     }
 }

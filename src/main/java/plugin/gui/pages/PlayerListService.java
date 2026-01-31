@@ -21,9 +21,9 @@ public final class PlayerListService {
         return CompletableFuture.supplyAsync(() -> {
 
             Set<UUID> source = switch (role) {
-                case OWNER -> config.administrators;
+                case ADMINISTRATOR -> config.administrators;
                 case MODERATOR -> config.moderators;
-                case MEMBER -> config.members;
+                default -> config.members;
             };
 
             String searchLower = normalize(search);

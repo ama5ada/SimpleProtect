@@ -94,7 +94,7 @@ Group #EditWorldConfigPanel {
         Group #PlayerGroupSelect {
             LayoutMode: Left;
 
-            TextButton #MemberButton {
+            TextButton #MemberBtn {
                 Padding: (Full: 5);
                 Style: TextButtonStyle(
                     Default: (
@@ -105,10 +105,10 @@ Group #EditWorldConfigPanel {
                     ),
                     Sounds: $C.@ButtonSounds
                 );
-                Text: "TEMPLATE";
+                Text: "Members";
             }
 
-            TextButton #ModeratorButton {
+            TextButton #ModeratorBtn {
                 Padding: (Full: 5);
                 Style: TextButtonStyle(
                     Default: (
@@ -119,10 +119,10 @@ Group #EditWorldConfigPanel {
                     ),
                     Sounds: $C.@ButtonSounds
                 );
-                Text: "TEMPLATE";
+                Text: "Moderators";
             }
 
-            TextButton #AdministratorButton {
+            TextButton #AdministratorBtn {
                 Padding: (Full: 5);
                 Style: TextButtonStyle(
                     Default: (
@@ -133,7 +133,7 @@ Group #EditWorldConfigPanel {
                     ),
                     Sounds: $C.@ButtonSounds
                 );
-                Text: "TEMPLATE";
+                Text: "Administrators";
             }
 
         }
@@ -147,7 +147,7 @@ Group #EditWorldConfigPanel {
                 FlexWeight: 1;
 
                 Label #AllowedPlayersTitle {
-                    Text: "Allowed Players (Bypass world protections)";
+                    Text: "Group Members";
                     Padding: (Top: 5, Bottom: 5);
                 }
 
@@ -163,7 +163,7 @@ Group #EditWorldConfigPanel {
                 FlexWeight: 1;
 
                 Label #DisallowedPlayersTitle {
-                    Text: "Disallowed Players (Protections apply)";
+                    Text: "Other Players";
                     Padding: (Top: 5, Bottom: 5);
                 }
 

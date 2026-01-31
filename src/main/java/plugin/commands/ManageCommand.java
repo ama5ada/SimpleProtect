@@ -40,7 +40,5 @@ public class ManageCommand extends AbstractPlayerCommand {
             page = new SimpleProtectUI(playerRef, CustomPageLifetime.CanDismissOrCloseThroughInteraction);
             player.getPageManager().openCustomPage(ref, store, page);
         }
-
-        playerRef.sendMessage(Message.raw("UI PAGE SHOWN"));
     }
 }

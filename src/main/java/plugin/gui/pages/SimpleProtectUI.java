@@ -58,6 +58,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     private static final String PROTECTION_UPDATE = "ProtectionUpdate";
     private static final String PLAYER_ACTION = "PlayerClick";
     private static final String UUID_ACTION = "UUIDClick";
+    private static final String GROUP_ACTION = "GroupClick";
     /**
      * TODO : Important, refresh this perm before saves
      */
@@ -423,10 +424,22 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         uiCommandBuilder.set("#WorldPlayerNotify #CheckBox.Value", currentConfig.notifyPlayer);
     }
 
+    private void rebuildGroupSelectionPanel(UICommandBuilder uiCommandBuilder) {
+        uiCommandBuilder.set("#MemberBtn.Background", "#00000000");
+        uiCommandBuilder.set("#ModeratorBtn.Background", "#00000000");
+        uiCommandBuilder.set("#AdministratorBtn.Background", "#00000000");
+        switch(currentPlayerRole) {
+            case PLAYER_ROLE.MEMBER -> uiCommandBuilder.set("#MemberBtn.Background", "#263047CC");
+            case PLAYER_ROLE.MODERATOR -> uiCommandBuilder.set("#ModeratorBtn.Background", "#263047CC");
+            case PLAYER_ROLE.ADMINISTRATOR -> uiCommandBuilder.set("#AdministratorBtn.Background", "#263047CC");
+        }
+    }
+
     private void buildSharedConfigButtons(UICommandBuilder uiCommandBuilder) {
         uiCommandBuilder.append("#WorldConfigButtons", "SaveButton.ui");
         uiCommandBuilder.append("#WorldConfigButtons", "LoadButton.ui");
         uiCommandBuilder.append("#WorldConfigButtons", "CancelButton.ui");
+        rebuildGroupSelectionPanel(uiCommandBuilder);
     }
 
     // Bind Save, Load, and Cancel buttons since all configs share these buttons
@@ -446,6 +459,12 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 EventData.of("@UUIDInput", "#UUIDInput.Value"), false);
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#AddUUIDBtn",
                 EventData.of(UUID_ACTION, "Add"), false);
+        uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#MemberBtn",
+                EventData.of(GROUP_ACTION, "Member"), false);
+        uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#ModeratorBtn",
+                EventData.of(GROUP_ACTION, "Moderator"), false);
+        uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#AdministratorBtn",
+                EventData.of(GROUP_ACTION, "Administrator"), false);
     }
 
     private void saveGlobalConfig() {
@@ -507,6 +526,15 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
             return;
         }
 
+        if (data.groupClicked != null) {
+            System.out.println(data.groupClicked);
+            currentPlayerRole = PLAYER_ROLE.valueOf(data.groupClicked.toUpperCase());
+            rebuildGroupSelectionPanel(uiCommandBuilder);
+            refreshPlayerPanels();
+            sendUpdate(uiCommandBuilder, uiEventBuilder, false);
+            return;
+        }
+
         // Handle a change to the global config
         if (data.globalConfigUpdate != null) {
             switch(data.globalConfigUpdate) {
@@ -521,10 +549,16 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
 
         if (data.playerUpdate != null) {
             UUID playerUUID = UUID.fromString(data.playerUpdate);
-            if (currentConfig.members.contains(playerUUID)) {
-                currentConfig.members.remove(playerUUID);
+            Set<UUID> allowedGroup;
+            switch(currentPlayerRole) {
+                case PLAYER_ROLE.MODERATOR -> allowedGroup = currentConfig.moderators;
+                case PLAYER_ROLE.ADMINISTRATOR -> allowedGroup = currentConfig.administrators;
+                default -> allowedGroup = currentConfig.members;
+            }
+            if (allowedGroup.contains(playerUUID)) {
+                allowedGroup.remove(playerUUID);
             } else {
-                currentConfig.members.add(playerUUID);
+                allowedGroup.add(playerUUID);
             }
             refreshPlayerPanels();
             return;
@@ -679,6 +713,9 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 .append(new KeyedCodec<>(UUID_ACTION, Codec.STRING),
                         (data, value) -> data.uuidAction = value,
                         data -> data.uuidAction).add()
+                .append(new KeyedCodec<>(GROUP_ACTION, Codec.STRING),
+                        (data, value) -> data.groupClicked = value,
+                        data -> data.groupClicked).add()
                 .build();
 
         private String worldFilter;
@@ -692,6 +729,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         private String playerNameUpdate;
         private String uuidUpdate;
         private String uuidAction;
+        private String groupClicked;
     }
 
     private static boolean validateUUID(String uuid) {
