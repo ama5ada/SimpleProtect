@@ -46,16 +46,6 @@ public class SimpleProtect extends JavaPlugin {
                     addAliases("m", "modify", "admin");
         }});
 
-        // Add a command for registering a new world with SimpleProtect by name
-        // - Add a GUI for setting up the world
-        // Add a command for clearing a world with SimpleProtect by name
-        // Add a command for renaming a world with SimpleProtect by name
-        // Add a command for modifying each field of a world
-        // - Add a GUI for viewing & modifying registered worlds
-
-        // Add a command for modifying each field of DefaultWorld
-        // - Add a GUI for viewing & modifying DefaultWorld
-
         getCommandRegistry().registerCommand(protectCommand);
 
         getEntityStoreRegistry().registerSystem(new BreakBlockEventSystem(BreakBlockEvent.class));

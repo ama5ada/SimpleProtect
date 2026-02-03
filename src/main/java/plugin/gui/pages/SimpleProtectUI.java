@@ -16,7 +16,9 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.npc.decisionmaker.core.conditions.base.ScaledCurveCondition;
 import plugin.ConfigState;
+import plugin.PluginConfig;
 import plugin.types.EVENT_TYPE;
 import plugin.types.PLAYER_ROLE;
 import plugin.config.SimpleProtectWorldConfig;
@@ -33,6 +35,8 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         EDIT_GLOBAL_CONFIG
     }
 
+    private final UUID playerUUID = playerRef.getUuid();
+
     private String worldFilter = "";
     private String currentWorld = "";
     private String nameForWorld = "";
@@ -41,6 +45,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
 
     private PANEL_VIEW currentPanelView = PANEL_VIEW.CLEAR;
     private PLAYER_ROLE currentPlayerRole = PLAYER_ROLE.MEMBER;
+    private PLAYER_ROLE playerPermission = PLAYER_ROLE.MEMBER;
 
     private int allowedCurrentPage = 0;
     private int disallowedCurrentPage = 0;
@@ -59,10 +64,6 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     private static final String PLAYER_ACTION = "PlayerClick";
     private static final String UUID_ACTION = "UUIDClick";
     private static final String GROUP_ACTION = "GroupClick";
-    /**
-     * TODO : Important, refresh this perm before saves
-     */
-    private final boolean canAdministrate;
 
     private boolean globalProtection = false;
     private boolean verboseLogging = false;
@@ -72,11 +73,6 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
 
     public SimpleProtectUI(@Nonnull PlayerRef playerRef, @Nonnull CustomPageLifetime lifetime) {
         super(playerRef, lifetime, Data.CODEC);
-        this.canAdministrate = PermissionsModule.get().hasPermission(playerRef.getUuid(),
-                ConfigState.get().getAdministratePermission());
-        if (canAdministrate) {
-            syncGlobalSettings();
-        }
     }
 
     private void syncGlobalSettings() {
@@ -109,7 +105,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         // Render dynamic children for the first time
         rebuildMainConfigPanel(uiCommandBuilder, uiEventBuilder);
 
-        if (canAdministrate) {
+        if (canAdministrate()) {
             buildAdminPanel(uiCommandBuilder, uiEventBuilder);
             rebuildWorldListPanel(uiCommandBuilder, uiEventBuilder);
         }
@@ -221,7 +217,6 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         }
     }
 
-
     private void refreshPlayerPanels() {
         long revision = ++revisionNumber;
         refreshAllowedPlayersAsync(revision);
@@ -234,17 +229,23 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 currentPlayerRole,
                 playerSearch,
                 allowedCurrentPage,
-                PAGE_ENTRIES
-        ).thenAccept(result -> {
+                PAGE_ENTRIES,
+                dbResult -> {
+                    if (revision != revisionNumber) return;
+                    runOnWorldThread(() -> rebuildAllowedPlayersPanel(dbResult));
+                }
+        ).thenAccept(cacheResult -> {
             if (revision != revisionNumber) return;
-
-            World world = Universe.get().getWorld(playerRef.getWorldUuid());
-            if (world != null && world.isAlive()) {
-                world.execute(() -> {
-                    rebuildAllowedPlayersPanel(result);
-                });
-            }
+            runOnWorldThread(() -> rebuildAllowedPlayersPanel(cacheResult));
         });
+    }
+
+    private void runOnWorldThread(Runnable task) {
+        if (playerRef.getWorldUuid() == null) return;
+        World world = Universe.get().getWorld(playerRef.getWorldUuid());
+        if (world != null && world.isAlive()) {
+            world.execute(task);
+        }
     }
 
     private void rebuildAllowedPlayersPanel(PageResult<PlayerListService.PlayerEntry> page) {
@@ -285,16 +286,15 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 currentConfig,
                 playerSearch,
                 allowedCurrentPage,
-                PAGE_ENTRIES
-        ).thenAccept(result -> {
-            if (revision != revisionNumber) return;
+                PAGE_ENTRIES,
+                dbResult -> {
+                    if (revision != revisionNumber) return;
 
-            World world = Universe.get().getWorld(playerRef.getWorldUuid());
-            if (world != null && world.isAlive()) {
-                world.execute(() -> {
-                    rebuildDisallowedPlayersPanel(result);
-                });
-            }
+                    runOnWorldThread(() -> rebuildDisallowedPlayersPanel(dbResult));
+                }
+        ).thenAccept(cacheResult -> {
+            if (revision != revisionNumber) return;
+            runOnWorldThread(() -> rebuildDisallowedPlayersPanel(cacheResult));
         });
     }
 
@@ -337,6 +337,17 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#DeleteBtn",
                 EventData.of(CONFIG_ACTION, "DeleteBtn"), false);
         syncConfigSettings();
+
+        if (currentConfig.owner == playerUUID || PermissionsModule.get().hasPermission(playerUUID, ConfigState.get().getAdministratePermission())) {
+            currentPlayerRole = PLAYER_ROLE.OWNER;
+        } else if (currentConfig.administrators.contains(playerUUID)) {
+            currentPlayerRole = PLAYER_ROLE.ADMINISTRATOR;
+        } else if (currentConfig.moderators.contains(playerUUID)) {
+            currentPlayerRole = PLAYER_ROLE.MODERATOR;
+        } else {
+            currentPlayerRole = PLAYER_ROLE.MEMBER;
+        }
+
         bindSharedWorldConfigEvents(uiEventBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
         bindSharedConfigButtons(uiEventBuilder);
@@ -468,13 +479,13 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     }
 
     private void saveGlobalConfig() {
-        if (canAdministrate) {
+        if (canAdministrate()) {
             ConfigState.get().updateGlobalConfig(globalProtection, notifyPlayer, verboseLogging);
         }
     }
 
     private void saveWorldConfig() {
-        if (canAdministrate) {
+        if (canAdministrate()) {
             if (currentPanelView == PANEL_VIEW.EDIT_DEFAULT_WORLD) {
                 ConfigState.get().updateDefaultWorldConfig(currentConfig);
             } else {
@@ -484,7 +495,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     }
 
     private void deleteWorldConfig() {
-        if (canAdministrate) {
+        if (canAdministrate()) {
             ConfigState.get().deleteWorldProtectionConfig(currentWorld);
         }
     }
@@ -497,7 +508,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         UICommandBuilder uiCommandBuilder = new UICommandBuilder();
         UIEventBuilder uiEventBuilder = new UIEventBuilder();
 
-        // Handle a change to the search field
+        // Handle a change to the world search field
         if (data.worldFilter != null) {
             worldFilter = data.worldFilter;
             rebuildWorldListPanel(uiCommandBuilder, uiEventBuilder);
@@ -505,6 +516,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
             return;
         }
 
+        // Handle a change to the world name input while creating a new config
         if (data.nameWorldUpdate != null) {
             worldFilter = data.nameWorldUpdate;
             nameForWorld = data.nameWorldUpdate;
@@ -513,12 +525,14 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
             return;
         }
 
+        // Change to the player name that is being searched for
         if (data.playerNameUpdate != null) {
             playerSearch = data.playerNameUpdate;
             refreshPlayerPanels();
             return;
         }
 
+        // Change to the UUID that is being searched for
         if (data.uuidUpdate != null) {
             uuidInput = data.uuidUpdate;
             uiCommandBuilder.set("#AddUUIDBtn.Disabled", !validateUUID(uuidInput));
@@ -527,7 +541,6 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         }
 
         if (data.groupClicked != null) {
-            System.out.println(data.groupClicked);
             currentPlayerRole = PLAYER_ROLE.valueOf(data.groupClicked.toUpperCase());
             rebuildGroupSelectionPanel(uiCommandBuilder);
             refreshPlayerPanels();
@@ -671,7 +684,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
             // All panel changing actions cause the world list to rebuild to update the highlighting
             rebuildWorldListPanel(uiCommandBuilder, uiEventBuilder);
             rebuildMainConfigPanel(uiCommandBuilder, uiEventBuilder);
-            if (canAdministrate) rebuildAdminPanel(uiCommandBuilder);
+            if (canAdministrate()) rebuildAdminPanel(uiCommandBuilder);
         }
 
         // Apply updates to the client
@@ -743,5 +756,9 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         } catch (IllegalArgumentException e) {
             return false;
         }
+    }
+
+    private boolean canAdministrate() {
+        return PermissionsModule.get().hasPermission(playerUUID, ConfigState.get().getAdministratePermission());
     }
 }

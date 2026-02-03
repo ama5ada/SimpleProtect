@@ -7,6 +7,7 @@ import plugin.config.SimpleProtectWorldConfig;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 public final class PlayerListService {
     public record PlayerEntry(UUID uuid, String displayName) {}
@@ -16,22 +17,18 @@ public final class PlayerListService {
             PLAYER_ROLE role,
             String search,
             int page,
-            int pageSize
+            int pageSize,
+            Consumer<PageResult<PlayerEntry>> dbUpdate
     ) {
         return CompletableFuture.supplyAsync(() -> {
-
             Set<UUID> source = switch (role) {
                 case ADMINISTRATOR -> config.administrators;
                 case MODERATOR -> config.moderators;
                 default -> config.members;
             };
 
-            String searchLower = normalize(search);
-
-            List<UUID> candidates = new ArrayList<>(source);
             List<UUID> cacheMisses = new ArrayList<>();
-
-            for (UUID uuid : candidates) {
+            for (UUID uuid : source) {
                 if (UUIDCache.get().getNameFromUUID(uuid) == null) {
                     cacheMisses.add(uuid);
                 }
@@ -40,76 +37,106 @@ public final class PlayerListService {
             if (!cacheMisses.isEmpty()) {
                 PlayerInfoDB.queryPlayersByUUIDsAsync(cacheMisses, dbResult -> {
                     dbResult.forEach(UUIDCache.get()::putPlayerInfo);
+
+                    dbUpdate.accept(
+                            buildCachedPlayerResult(source, search, page, pageSize)
+                    );
                 });
             }
 
-            List<PlayerEntry> entries = new ArrayList<>();
-
-            for (UUID uuid : candidates) {
-                String name = UUIDCache.get().getNameFromUUID(uuid);
-                if (name == null) {
-                    name = uuid.toString();
-                    entries.add(new PlayerEntry(uuid, name));
-                } else if (searchLower.isEmpty()
-                        || name.toLowerCase().startsWith(searchLower)){
-                    entries.add(new PlayerEntry(uuid, name));
-                }
-            }
-
-            entries.sort(Comparator.comparing(
-                    PlayerEntry::displayName,
-                    String.CASE_INSENSITIVE_ORDER
-            ));
-
-            return paginate(entries, page, pageSize);
+            return buildCachedPlayerResult(source, search, page, pageSize);
         });
+    }
+
+    private PageResult<PlayerEntry> buildCachedPlayerResult(
+            Set<UUID> source,
+            String search,
+            int page,
+            int pageSize
+    ) {
+        String searchLower = normalize(search);
+
+        List<PlayerEntry> entries = new ArrayList<>();
+
+        for (UUID uuid : source) {
+            String name = UUIDCache.get().getNameFromUUID(uuid);
+
+            if (name == null) {
+                entries.add(new PlayerEntry(uuid, uuid.toString()));
+            } else if (searchLower.isEmpty()
+                    || name.toLowerCase().startsWith(searchLower)) {
+                entries.add(new PlayerEntry(uuid, name));
+            }
+        }
+
+        entries.sort(Comparator.comparing(
+                PlayerEntry::displayName,
+                String.CASE_INSENSITIVE_ORDER
+        ));
+
+        return paginate(entries, page, pageSize);
     }
 
     public CompletableFuture<PageResult<PlayerEntry>> buildDisallowedPlayersPageAsync(
             SimpleProtectWorldConfig config,
             String search,
             int page,
-            int pageSize
+            int pageSize,
+            Consumer<PageResult<PlayerEntry>> dbUpdate
     ) {
         return CompletableFuture.supplyAsync(() -> {
-
             Set<UUID> excluded = new HashSet<>();
             excluded.addAll(config.administrators);
             excluded.addAll(config.moderators);
             excluded.addAll(config.members);
             excluded.add(config.owner);
 
-            String searchLower = normalize(search);
-
-            PlayerInfoDB.queryPlayersAsync(searchLower, dbResult -> {
+            PlayerInfoDB.queryPlayersAsync(normalize(search), dbResult -> {
                 dbResult.forEach(UUIDCache.get()::putPlayerInfo);
+
+                dbUpdate.accept(
+                        buildCachedDisallowedPlayerResult(
+                                excluded, search, page, pageSize
+                        )
+                );
             });
 
-            List<PlayerEntry> entries = new ArrayList<>();
-
-            for (Map.Entry<UUID, String> entry : UUIDCache.get().getEntries()) {
-                UUID uuid = entry.getKey();
-                String name = entry.getValue();
-
-                if (excluded.contains(uuid)) continue;
-
-                if (searchLower.isEmpty()
-                        || name.toLowerCase().startsWith(searchLower)) {
-                    entries.add(new PlayerEntry(uuid, name));
-                }
-                if (name == null) {
-                    name = uuid.toString();
-                    entries.add(new PlayerEntry(uuid, name));
-                }
-            }
-
-            entries.sort(Comparator.comparing(
-                    PlayerEntry::displayName,
-                    String.CASE_INSENSITIVE_ORDER
-            ));
-
-            return paginate(entries, page, pageSize);
+            return buildCachedDisallowedPlayerResult(
+                    excluded, search, page, pageSize
+            );
         });
+    }
+
+    private PageResult<PlayerEntry> buildCachedDisallowedPlayerResult(
+            Set<UUID> excluded,
+            String search,
+            int page,
+            int pageSize
+    ) {
+        String searchLower = normalize(search);
+
+        List<PlayerEntry> entries = new ArrayList<>();
+
+        for (Map.Entry<UUID, String> entry : UUIDCache.get().getEntries()) {
+            UUID uuid = entry.getKey();
+            String name = entry.getValue();
+
+            if (excluded.contains(uuid)) continue;
+
+            if (name == null) {
+                entries.add(new PlayerEntry(uuid, uuid.toString()));
+            } else if (searchLower.isEmpty()
+                    || name.toLowerCase().startsWith(searchLower)) {
+                entries.add(new PlayerEntry(uuid, name));
+            }
+        }
+
+        entries.sort(Comparator.comparing(
+                PlayerEntry::displayName,
+                String.CASE_INSENSITIVE_ORDER
+        ));
+
+        return paginate(entries, page, pageSize);
     }
 
     private static String normalize(String search) {
