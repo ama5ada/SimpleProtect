@@ -19,31 +19,15 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import plugin.ConfigState;
 import plugin.types.EVENT_TYPE;
 import plugin.types.PLAYER_ROLE;
-import plugin.config.SimpleProtectWorldConfig;
+import plugin.gui.pages.SimpleProtectUIState.PanelView;
 
 import javax.annotation.Nonnull;
 import java.util.*;
 
 public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Data> {
-    private enum PANEL_VIEW {
-        CLEAR,
-        EDIT_WORLD,
-        EDIT_DEFAULT_WORLD,
-        CREATE_NEW_CONFIG,
-        EDIT_GLOBAL_CONFIG
-    }
-
     private final UUID playerUUID = playerRef.getUuid();
 
-    private String worldFilter = "";
-    private String currentWorld = "";
-    private String nameForWorld = "";
-    private String playerSearch = "";
-    private String uuidInput = "";
-
-    private PANEL_VIEW currentPanelView = PANEL_VIEW.CLEAR;
-    private PLAYER_ROLE currentPlayerRole = PLAYER_ROLE.MEMBER;
-    private PLAYER_ROLE playerPermission = PLAYER_ROLE.MEMBER;
+    private final SimpleProtectUIState uiState = new SimpleProtectUIState(playerUUID);
 
     private int allowedCurrentPage = 0;
     private int disallowedCurrentPage = 0;
@@ -63,28 +47,8 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     private static final String UUID_ACTION = "UUIDClick";
     private static final String GROUP_ACTION = "GroupClick";
 
-    private boolean globalProtection = false;
-    private boolean verboseLogging = false;
-    private boolean notifyPlayer = false;
-
-    private SimpleProtectWorldConfig currentConfig;
-
     public SimpleProtectUI(@Nonnull PlayerRef playerRef, @Nonnull CustomPageLifetime lifetime) {
         super(playerRef, lifetime, Data.CODEC);
-    }
-
-    private void syncGlobalSettings() {
-        globalProtection = ConfigState.get().isProtected();
-        verboseLogging = ConfigState.get().isVerbose();
-        notifyPlayer = ConfigState.get().notifyPlayer();
-    }
-
-    private void syncConfigSettings() {
-        if (currentPanelView == PANEL_VIEW.EDIT_DEFAULT_WORLD || currentPanelView == PANEL_VIEW.CREATE_NEW_CONFIG) {
-            currentConfig = new SimpleProtectWorldConfig(ConfigState.get().getDefaultWorldConfig());
-        } else {
-            currentConfig = new SimpleProtectWorldConfig(ConfigState.get().getWorldProtectionConfig(currentWorld));
-        }
     }
 
     @Override
@@ -116,8 +80,8 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         uiCommandBuilder.clear("#WorldList");
 
         String[] worldNames = ConfigState.get().getWorldNames();
-        if (!worldFilter.isBlank()) {
-            String search = worldFilter.toLowerCase();
+        if (!uiState.worldFilter().isBlank()) {
+            String search = uiState.worldFilter().toLowerCase();
             worldNames = Arrays.stream(worldNames)
                     .filter(w -> w.toLowerCase().contains(search))
                     .toArray(String[]::new);
@@ -127,9 +91,9 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
             String world = worldNames[i];
             uiCommandBuilder.append("#WorldList", "WorldButton.ui");
             uiCommandBuilder.set("#WorldList[" + i + "].Text", world);
-            if (worldNames[i].equals(currentWorld)) {
+            if (worldNames[i].equals(uiState.currentWorld())) {
                 String backgroundColor = "#263047CC";
-                if (currentPanelView == PANEL_VIEW.CREATE_NEW_CONFIG) backgroundColor = "#FF0000CC";
+                if (uiState.panelView() == PanelView.CREATE_NEW_CONFIG) backgroundColor = "#FF0000CC";
                 uiCommandBuilder.set("#WorldList[" + i + "].Background", backgroundColor);
             }
 
@@ -146,15 +110,15 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         uiCommandBuilder.clear("#ConfigInfoBody");
         uiCommandBuilder.clear("#ExitPlaceholder");
 
-        playerSearch = "";
+        uiState.setPlayerSearch("");
 
-        switch (currentPanelView) {
+        switch (uiState.panelView()) {
             case CLEAR -> {
                 uiCommandBuilder.set("#InfoTitle.Text", " ");
                 uiCommandBuilder.append("#ConfigInfoBody", "ModInfo.ui");
             }
             case EDIT_WORLD -> {
-                uiCommandBuilder.set("#InfoTitle.Text", String.format("Editing config for world : %s", currentWorld));
+                uiCommandBuilder.set("#InfoTitle.Text", String.format("Editing config for world : %s", uiState.currentWorld()));
                 buildWorldEditPanel(uiCommandBuilder, uiEventBuilder);
                 rebuildProtectionsPanel(uiCommandBuilder, uiEventBuilder);
             }
@@ -177,9 +141,9 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
             }
         }
 
-        uiCommandBuilder.set("#WorldSearchInput.Value", worldFilter);
+        uiCommandBuilder.set("#WorldSearchInput.Value", uiState.worldFilter());
 
-        if (currentPanelView != PANEL_VIEW.CLEAR) {
+        if (uiState.panelView() != PanelView.CLEAR) {
             uiCommandBuilder.append("#ExitPlaceholder", "ExitPanelButton.ui");
             // Bind config panel close input if the button exists
             uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#ExitPanelButton",
@@ -190,10 +154,10 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     private void rebuildProtectionsPanel(UICommandBuilder uiCommandBuilder, UIEventBuilder uiEventBuilder) {
         uiCommandBuilder.clear("#EnabledProtections");
         uiCommandBuilder.clear("#DisabledProtections");
-        EnumSet<EVENT_TYPE> disabled = EnumSet.complementOf(currentConfig.enabledProtections);
+        EnumSet<EVENT_TYPE> disabled = EnumSet.complementOf(uiState.config().enabledProtections);
 
         int i = 0;
-        for (EVENT_TYPE included : currentConfig.enabledProtections) {
+        for (EVENT_TYPE included : uiState.config().enabledProtections) {
             uiCommandBuilder.append("#EnabledProtections", "EventButton.ui");
             uiCommandBuilder.set("#EnabledProtections[" + i + "].Text", included.toString());
             uiCommandBuilder.set("#EnabledProtections[" + i + "].Background", "#26304719");
@@ -223,9 +187,9 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
 
     private void refreshAllowedPlayersAsync(long revision) {
         playerListService.buildAllowedPlayersPageAsync(
-                currentConfig,
-                currentPlayerRole,
-                playerSearch,
+                uiState.config(),
+                uiState.editPlayerRole(),
+                uiState.playerSearch(),
                 allowedCurrentPage,
                 PAGE_ENTRIES,
                 dbResult -> {
@@ -281,8 +245,8 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
 
     private void refreshDisallowedPlayersAsync(long revision) {
         playerListService.buildDisallowedPlayersPageAsync(
-                currentConfig,
-                playerSearch,
+                uiState.config(),
+                uiState.playerSearch(),
                 allowedCurrentPage,
                 PAGE_ENTRIES,
                 dbResult -> {
@@ -334,17 +298,9 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         uiCommandBuilder.append("#WorldConfigButtons", "DeleteButton.ui");
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#DeleteBtn",
                 EventData.of(CONFIG_ACTION, "DeleteBtn"), false);
-        syncConfigSettings();
+        uiState.syncWorldConfig();
 
-        if (currentConfig.owner == playerUUID || PermissionsModule.get().hasPermission(playerUUID, ConfigState.get().getAdministratePermission())) {
-            currentPlayerRole = PLAYER_ROLE.OWNER;
-        } else if (currentConfig.administrators.contains(playerUUID)) {
-            currentPlayerRole = PLAYER_ROLE.ADMINISTRATOR;
-        } else if (currentConfig.moderators.contains(playerUUID)) {
-            currentPlayerRole = PLAYER_ROLE.MODERATOR;
-        } else {
-            currentPlayerRole = PLAYER_ROLE.MEMBER;
-        }
+        uiState.resolvePlayerRole();
 
         bindSharedWorldConfigEvents(uiEventBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
@@ -355,7 +311,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
 
     private void buildDefaultEditPanel(UICommandBuilder uiCommandBuilder, UIEventBuilder uiEventBuilder) {
         uiCommandBuilder.append("#ConfigInfoBody", "EditWorldConfig.ui");
-        syncConfigSettings();
+        uiState.syncWorldConfig();
         bindSharedWorldConfigEvents(uiEventBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
         bindSharedConfigButtons(uiEventBuilder);
@@ -368,7 +324,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         uiCommandBuilder.append("#WorldConfigButtons","NameWorldInput.ui");
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#WorldNameInput",
                 EventData.of("@WorldNameInput", "#WorldNameInput.Value"), false);
-        syncConfigSettings();
+        uiState.syncWorldConfig();
         bindSharedWorldConfigEvents(uiEventBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
         bindSharedConfigButtons(uiEventBuilder);
@@ -391,7 +347,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         uiCommandBuilder.set("#CreateConfigBtn.Background", "#00000000");
         uiCommandBuilder.set("#EditGlobalConfigBtn.Background", "#00000000");
 
-        switch(currentPanelView) {
+        switch(uiState.panelView()) {
             case EDIT_DEFAULT_WORLD -> uiCommandBuilder.set("#DefaultWorldBtn.Background", "#263047CC");
             case CREATE_NEW_CONFIG -> uiCommandBuilder.set("#CreateConfigBtn.Background", "#263047CC");
             case EDIT_GLOBAL_CONFIG -> uiCommandBuilder.set("#EditGlobalConfigBtn.Background", "#263047CC");
@@ -400,10 +356,10 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
 
     private void buildEditGlobalConfigPanel(UICommandBuilder uiCommandBuilder, UIEventBuilder uiEventBuilder) {
         uiCommandBuilder.append("#ConfigInfoBody", "EditGlobalConfig.ui");
-        syncGlobalSettings();
-        uiCommandBuilder.set("#GlobalProtection #CheckBox.Value", globalProtection);
-        uiCommandBuilder.set("#PlayerNotify #CheckBox.Value", notifyPlayer);
-        uiCommandBuilder.set("#VerboseLogging #CheckBox.Value", verboseLogging);
+        uiState.syncGlobalSettings();
+        uiCommandBuilder.set("#GlobalProtection #CheckBox.Value", uiState.globalProtection());
+        uiCommandBuilder.set("#PlayerNotify #CheckBox.Value", uiState.notifyPlayer());
+        uiCommandBuilder.set("#VerboseLogging #CheckBox.Value", uiState.verboseLogging());
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#GlobalProtection #CheckBox",
                 EventData.of(GLOBAL_CONFIG_UPDATE, "ToggleGlobalProtection"), false);
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#PlayerNotify #CheckBox",
@@ -414,14 +370,14 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     }
 
     private void rebuildEditGlobalConfigPanel(UICommandBuilder uiCommandBuilder) {
-        uiCommandBuilder.set("#GlobalProtection #CheckBox.Value", globalProtection);
-        uiCommandBuilder.set("#PlayerNotify #CheckBox.Value", notifyPlayer);
-        uiCommandBuilder.set("#VerboseLogging #CheckBox.Value", verboseLogging);
+        uiCommandBuilder.set("#GlobalProtection #CheckBox.Value", uiState.globalProtection());
+        uiCommandBuilder.set("#PlayerNotify #CheckBox.Value", uiState.notifyPlayer());
+        uiCommandBuilder.set("#VerboseLogging #CheckBox.Value", uiState.verboseLogging());
     }
 
     private void buildEditWorldConfigPanel(UICommandBuilder uiCommandBuilder, UIEventBuilder uiEventBuilder) {
-        uiCommandBuilder.set("#WorldProtection #CheckBox.Value", currentConfig.protectionEnabled);
-        uiCommandBuilder.set("#WorldPlayerNotify #CheckBox.Value", currentConfig.notifyPlayer);
+        uiCommandBuilder.set("#WorldProtection #CheckBox.Value", uiState.config().protectionEnabled);
+        uiCommandBuilder.set("#WorldPlayerNotify #CheckBox.Value", uiState.config().notifyPlayer);
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#WorldProtection #CheckBox",
                 EventData.of(WORLD_CONFIG_UPDATE, "ToggleWorldProtection"), false);
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.ValueChanged, "#WorldPlayerNotify #CheckBox",
@@ -429,15 +385,15 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     }
 
     private void rebuildEditWorldConfigPanel(UICommandBuilder uiCommandBuilder) {
-        uiCommandBuilder.set("#WorldProtection #CheckBox.Value", currentConfig.protectionEnabled);
-        uiCommandBuilder.set("#WorldPlayerNotify #CheckBox.Value", currentConfig.notifyPlayer);
+        uiCommandBuilder.set("#WorldProtection #CheckBox.Value", uiState.config().protectionEnabled);
+        uiCommandBuilder.set("#WorldPlayerNotify #CheckBox.Value", uiState.config().notifyPlayer);
     }
 
     private void rebuildGroupSelectionPanel(UICommandBuilder uiCommandBuilder) {
         uiCommandBuilder.set("#MemberBtn.Background", "#00000000");
         uiCommandBuilder.set("#ModeratorBtn.Background", "#00000000");
         uiCommandBuilder.set("#AdministratorBtn.Background", "#00000000");
-        switch(currentPlayerRole) {
+        switch(uiState.editPlayerRole()) {
             case PLAYER_ROLE.MEMBER -> uiCommandBuilder.set("#MemberBtn.Background", "#263047CC");
             case PLAYER_ROLE.MODERATOR -> uiCommandBuilder.set("#ModeratorBtn.Background", "#263047CC");
             case PLAYER_ROLE.ADMINISTRATOR -> uiCommandBuilder.set("#AdministratorBtn.Background", "#263047CC");
@@ -476,25 +432,19 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 EventData.of(GROUP_ACTION, "Administrator"), false);
     }
 
-    private void saveGlobalConfig() {
-        if (canAdministrate()) {
-            ConfigState.get().updateGlobalConfig(globalProtection, notifyPlayer, verboseLogging);
-        }
-    }
-
     private void saveWorldConfig() {
         if (canAdministrate()) {
-            if (currentPanelView == PANEL_VIEW.EDIT_DEFAULT_WORLD) {
-                ConfigState.get().updateDefaultWorldConfig(currentConfig);
+            if (uiState.panelView() == PanelView.EDIT_DEFAULT_WORLD) {
+                ConfigState.get().updateDefaultWorldConfig(uiState.config());
             } else {
-                ConfigState.get().setWorldProtectionConfig(currentWorld, currentConfig);
+                ConfigState.get().setWorldProtectionConfig(uiState.currentWorld(), uiState.config());
             }
         }
     }
 
     private void deleteWorldConfig() {
         if (canAdministrate()) {
-            ConfigState.get().deleteWorldProtectionConfig(currentWorld);
+            ConfigState.get().deleteWorldProtectionConfig(uiState.currentWorld());
         }
     }
 
@@ -508,7 +458,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
 
         // Handle a change to the world search field
         if (data.worldFilter != null) {
-            worldFilter = data.worldFilter;
+            uiState.setWorldFilter(data.worldFilter);
             rebuildWorldListPanel(uiCommandBuilder, uiEventBuilder);
             sendUpdate(uiCommandBuilder, uiEventBuilder, false);
             return;
@@ -516,8 +466,8 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
 
         // Handle a change to the world name input while creating a new config
         if (data.nameWorldUpdate != null) {
-            worldFilter = data.nameWorldUpdate;
-            nameForWorld = data.nameWorldUpdate;
+            uiState.setWorldFilter(data.nameWorldUpdate);
+            uiState.setNameForWorld(data.nameWorldUpdate);
             rebuildWorldListPanel(uiCommandBuilder, uiEventBuilder);
             sendUpdate(uiCommandBuilder, uiEventBuilder, false);
             return;
@@ -525,21 +475,22 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
 
         // Change to the player name that is being searched for
         if (data.playerNameUpdate != null) {
-            playerSearch = data.playerNameUpdate;
+            uiState.setPlayerSearch(data.playerNameUpdate);
             refreshPlayerPanels();
             return;
         }
 
         // Change to the UUID that is being searched for
         if (data.uuidUpdate != null) {
-            uuidInput = data.uuidUpdate;
-            uiCommandBuilder.set("#AddUUIDBtn.Disabled", !validateUUID(uuidInput));
+            uiState.setUuidInput(data.uuidUpdate);
+            uiCommandBuilder.set("#AddUUIDBtn.Disabled", !validateUUID(uiState.uuidInput()));
             sendUpdate(uiCommandBuilder, uiEventBuilder, false);
             return;
         }
 
+        // Change the group that is being edited
         if (data.groupClicked != null) {
-            currentPlayerRole = PLAYER_ROLE.valueOf(data.groupClicked.toUpperCase());
+            uiState.setEditPlayerRole(PLAYER_ROLE.valueOf(data.groupClicked.toUpperCase()));
             rebuildGroupSelectionPanel(uiCommandBuilder);
             refreshPlayerPanels();
             sendUpdate(uiCommandBuilder, uiEventBuilder, false);
@@ -549,9 +500,9 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         // Handle a change to the global config
         if (data.globalConfigUpdate != null) {
             switch(data.globalConfigUpdate) {
-                case "ToggleGlobalProtection" -> globalProtection = !globalProtection;
-                case "ToggleGlobalPlayerNotify" -> notifyPlayer = !notifyPlayer;
-                case "ToggleVerboseLogging" -> verboseLogging = !verboseLogging;
+                case "ToggleGlobalProtection" -> uiState.toggleGlobalProtection();
+                case "ToggleGlobalPlayerNotify" -> uiState.toggleNotifyPlayer();
+                case "ToggleVerboseLogging" -> uiState.toggleVerboseLogging();
             }
             rebuildEditGlobalConfigPanel(uiCommandBuilder);
             sendUpdate(uiCommandBuilder, uiEventBuilder, false);
@@ -561,10 +512,10 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         if (data.playerUpdate != null) {
             UUID playerUUID = UUID.fromString(data.playerUpdate);
             Set<UUID> allowedGroup;
-            switch(currentPlayerRole) {
-                case PLAYER_ROLE.MODERATOR -> allowedGroup = currentConfig.moderators;
-                case PLAYER_ROLE.ADMINISTRATOR -> allowedGroup = currentConfig.administrators;
-                default -> allowedGroup = currentConfig.members;
+            switch(uiState.editPlayerRole()) {
+                case PLAYER_ROLE.MODERATOR -> allowedGroup = uiState.config().moderators;
+                case PLAYER_ROLE.ADMINISTRATOR -> allowedGroup = uiState.config().administrators;
+                default -> allowedGroup = uiState.config().members;
             }
             if (allowedGroup.contains(playerUUID)) {
                 allowedGroup.remove(playerUUID);
@@ -576,18 +527,18 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         }
 
         if (data.uuidAction != null) {
-            UUID playerUUID = UUID.fromString(uuidInput);
-            currentConfig.members.add(playerUUID);
+            UUID playerUUID = UUID.fromString(uiState.uuidInput());
+            uiState.config().members.add(playerUUID);
             sendUpdate(uiCommandBuilder, uiEventBuilder, false);
             return;
         }
 
         if (data.protectionUpdate != null) {
             EVENT_TYPE changed = EVENT_TYPE.valueOf(data.protectionUpdate);
-            if (currentConfig.enabledProtections.contains(changed)) {
-                currentConfig.enabledProtections.remove(changed);
+            if (uiState.config().enabledProtections.contains(changed)) {
+                uiState.config().enabledProtections.remove(changed);
             } else {
-                currentConfig.enabledProtections.add(changed);
+                uiState.config().enabledProtections.add(changed);
             }
             rebuildProtectionsPanel(uiCommandBuilder, uiEventBuilder);
             sendUpdate(uiCommandBuilder, uiEventBuilder, false);
@@ -596,8 +547,8 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
 
         if (data.worldConfigUpdate != null) {
             switch(data.worldConfigUpdate) {
-                case "ToggleWorldProtection" -> currentConfig.protectionEnabled = !currentConfig.protectionEnabled;
-                case "ToggleWorldNotify" -> currentConfig.notifyPlayer = !currentConfig.notifyPlayer;
+                case "ToggleWorldProtection" -> uiState.config().protectionEnabled = !uiState.config().protectionEnabled;
+                case "ToggleWorldNotify" -> uiState.config().notifyPlayer = !uiState.config().notifyPlayer;
             }
             rebuildEditWorldConfigPanel(uiCommandBuilder);
             sendUpdate(uiCommandBuilder, uiEventBuilder, false);
@@ -605,56 +556,57 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         }
 
         if (data.configAction != null) {
-            switch(currentPanelView) {
-                case PANEL_VIEW.EDIT_GLOBAL_CONFIG -> {
+            switch(uiState.panelView()) {
+                case PanelView.EDIT_GLOBAL_CONFIG -> {
                     switch(data.configAction) {
-                        case "SaveBtn" -> saveGlobalConfig();
+                        case "SaveBtn" -> uiState.saveGlobalConfig();
                         case "LoadBtn" -> {
-                            syncGlobalSettings();
+                            uiState.syncGlobalSettings();
                             rebuildEditGlobalConfigPanel(uiCommandBuilder);
                         }
                     }
                 }
-                case PANEL_VIEW.EDIT_WORLD -> {
+                case PanelView.EDIT_WORLD -> {
                     switch (data.configAction) {
                         case "SaveBtn" -> saveWorldConfig();
                         case "LoadBtn" -> {
-                            syncConfigSettings();
+                            uiState.syncWorldConfig();
                             rebuildProtectionsPanel(uiCommandBuilder, uiEventBuilder);
                             rebuildEditWorldConfigPanel(uiCommandBuilder);
                         }
                         case "DeleteBtn" -> {
                             deleteWorldConfig();
-                            currentPanelView = PANEL_VIEW.CLEAR;
-                            worldFilter = "";
-                            currentWorld = "";
+                            uiState.setPanelView(PanelView.CLEAR);
+                            uiState.setWorldFilter("");
+                            uiState.setCurrentWorld("");
                             rebuildMainConfigPanel(uiCommandBuilder, uiEventBuilder);
                         }
                     }
                 }
-                case PANEL_VIEW.CREATE_NEW_CONFIG -> {
+                case PanelView.CREATE_NEW_CONFIG -> {
                     switch (data.configAction) {
                         case "SaveBtn" -> {
-                            currentWorld = nameForWorld;
-                            currentPanelView = PANEL_VIEW.EDIT_WORLD;
+                            uiState.setCurrentWorld(uiState.nameForWorld());
+                            uiState.setNameForWorld("");
+                            uiState.setPanelView(PanelView.EDIT_WORLD);
                             saveWorldConfig();
                             rebuildMainConfigPanel(uiCommandBuilder, uiEventBuilder);
                             rebuildAdminPanel(uiCommandBuilder);
                         }
                         case "LoadBtn" -> {
-                            syncConfigSettings();
+                            uiState.syncWorldConfig();
                             rebuildProtectionsPanel(uiCommandBuilder, uiEventBuilder);
                             rebuildEditWorldConfigPanel(uiCommandBuilder);
                         }
                     }
                 }
-                case PANEL_VIEW.EDIT_DEFAULT_WORLD -> {
+                case PanelView.EDIT_DEFAULT_WORLD -> {
                     switch (data.configAction) {
                         case "SaveBtn" -> {
                             saveWorldConfig();
                         }
                         case "LoadBtn" -> {
-                            syncConfigSettings();
+                            uiState.syncWorldConfig();
                             rebuildProtectionsPanel(uiCommandBuilder, uiEventBuilder);
                             rebuildEditWorldConfigPanel(uiCommandBuilder);
                         }
@@ -668,17 +620,18 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
 
         if (data.mainPanel != null) {
             // All panel changing actions cause the world list to rebuild to update the highlighting
-            currentWorld = "";
+            uiState.setCurrentWorld("");
             switch (data.mainPanel) {
-                case "DefaultWorldBtn" -> currentPanelView = PANEL_VIEW.EDIT_DEFAULT_WORLD;
-                case "CreateConfigBtn" -> currentPanelView = PANEL_VIEW.CREATE_NEW_CONFIG;
-                case "EditGlobalConfigBtn" -> currentPanelView = PANEL_VIEW.EDIT_GLOBAL_CONFIG;
-                case "ExitPanelBtn" -> currentPanelView = PANEL_VIEW.CLEAR;
+                case "DefaultWorldBtn" -> uiState.setPanelView(PanelView.EDIT_DEFAULT_WORLD);
+                case "CreateConfigBtn" -> uiState.setPanelView(PanelView.CREATE_NEW_CONFIG);
+                case "EditGlobalConfigBtn" -> uiState.setPanelView(PanelView.EDIT_GLOBAL_CONFIG);
+                case "ExitPanelBtn" -> uiState.setPanelView(PanelView.CLEAR);
                 default -> {
-                    currentWorld = data.mainPanel;
-                    currentPanelView = PANEL_VIEW.EDIT_WORLD;
+                    uiState.setCurrentWorld(data.mainPanel);
+                    uiState.setPanelView(PanelView.EDIT_WORLD);
                 }
             }
+            uiState.syncWorldConfig();
             // All panel changing actions cause the world list to rebuild to update the highlighting
             rebuildWorldListPanel(uiCommandBuilder, uiEventBuilder);
             rebuildMainConfigPanel(uiCommandBuilder, uiEventBuilder);

@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.UUID;
 
 public class SimpleProtectUIState {
-
     public enum PanelView {
         CLEAR,
         EDIT_WORLD,
@@ -23,6 +22,7 @@ public class SimpleProtectUIState {
     private final UUID playerUUID;
 
     private PanelView currentPanelView = PanelView.CLEAR;
+    private PLAYER_ROLE editPlayerRole = PLAYER_ROLE.MEMBER;
     private PLAYER_ROLE currentPlayerRole = PLAYER_ROLE.MEMBER;
     private String currentWorld = "";
     private String worldFilter = "";
@@ -90,8 +90,10 @@ public class SimpleProtectUIState {
     }
 
     public void resolvePlayerRole() {
-        if (currentConfig.owner.equals(playerUUID)
-                || PermissionsModule.get().hasPermission(
+        if (currentConfig.owner != null && currentConfig.owner.equals(playerUUID)) {
+            currentPlayerRole = PLAYER_ROLE.OWNER;
+        }
+        else if (PermissionsModule.get().hasPermission(
                 playerUUID,
                 ConfigState.get().getAdministratePermission()
         )) {
@@ -133,14 +135,20 @@ public class SimpleProtectUIState {
     public PanelView panelView() { return currentPanelView; }
     public void setPanelView(PanelView view) { this.currentPanelView = view; }
 
-    public PLAYER_ROLE playerRole() { return currentPlayerRole; }
-    public void setPlayerRole(PLAYER_ROLE role) { this.currentPlayerRole = role; }
+    public PLAYER_ROLE currentPlayerRole() { return currentPlayerRole; }
+    public void setCurrentPlayerRole(PLAYER_ROLE role) { this.currentPlayerRole = role; }
+
+    public PLAYER_ROLE editPlayerRole() { return editPlayerRole; }
+    public void setEditPlayerRole(PLAYER_ROLE role) { this.editPlayerRole = role; }
 
     public String currentWorld() { return currentWorld; }
     public void setCurrentWorld(String world) { this.currentWorld = world; }
 
     public String worldFilter() { return worldFilter; }
     public void setWorldFilter(String filter) { this.worldFilter = filter; }
+
+    public String nameForWorld() { return nameForWorld; }
+    public void setNameForWorld(String nameForWorld) { this.nameForWorld = nameForWorld; }
 
     public String playerSearch() { return playerSearch; }
     public void setPlayerSearch(String search) { this.playerSearch = search; }
