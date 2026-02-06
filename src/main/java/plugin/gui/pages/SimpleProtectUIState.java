@@ -10,6 +10,10 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Handles all UI rendering for the SimpleProtect UI.
+ * This is the "Model" in the MVC pattern.
+ */
 public class SimpleProtectUIState {
     public enum PanelView {
         CLEAR,
@@ -31,8 +35,10 @@ public class SimpleProtectUIState {
     private String playerSearch = "";
     private String uuidInput = "";
 
-    private int allowedCurrentPage = 0;
-    private int disallowedCurrentPage = 0;
+    private long revisionNumber = 0;
+
+    private int currentAllowedPage = 0;
+    private int currentDisallowedPage = 0;
 
     private boolean globalProtection;
     private boolean verboseLogging;
@@ -155,6 +161,20 @@ public class SimpleProtectUIState {
 
     public String uuidInput() { return uuidInput; }
     public void setUuidInput(String uuid) { this.uuidInput = uuid; }
+
+    public long revisionNumber() { return this.revisionNumber; }
+    public long getAndIncrementRevisionNumber() {
+        this.revisionNumber++;
+        return this.revisionNumber;
+    }
+
+    public int currentAllowedPage() { return currentAllowedPage; }
+    public void incrementCurrentAllowedPage() { this.currentAllowedPage++; }
+    public void decrementCurrentAllowedPage() { this.currentAllowedPage--; }
+
+    public int currentDisallowedPage() { return currentDisallowedPage; }
+    public void incrementCurrentDisallowedPage() { this.currentDisallowedPage++; }
+    public void decrementCurrentDisallowedPage() { this.currentDisallowedPage--; }
 
     public SimpleProtectWorldConfig config() { return currentConfig; }
 
