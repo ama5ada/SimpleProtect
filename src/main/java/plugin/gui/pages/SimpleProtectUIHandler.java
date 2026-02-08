@@ -45,7 +45,8 @@ public class SimpleProtectUIHandler {
         new PlayerGroupProcessor(),
         new AddUUIDProcessor(),
         new PanelChangeProcessor(),
-        new ConfigSyncProcessor()
+        new ConfigSyncProcessor(),
+        new PaginationActionProcessor()
     );
 
     /**
@@ -370,6 +371,26 @@ public class SimpleProtectUIHandler {
             }
             // Default to no permission, clear panel etc
             return handlePermissionFailure(state);
+        }
+    }
+
+    /**
+     * Handle a pagination navigation action (previous, next page)
+     */
+    private static class PaginationActionProcessor implements DataEventProcessor {
+        @Override
+        public boolean canProcess(Data data) { return data.paginationAction != null; }
+
+        @Override
+        public EnumSet<RenderScope> process(Data data, SimpleProtectUIState state) {
+            switch(data.paginationAction) {
+                case "NextAllowedBtn" -> state.incrementCurrentAllowedPage();
+                case "PrevAllowedBtn" -> state.decrementCurrentAllowedPage();
+            }
+
+            System.out.println(state.currentAllowedPage());
+
+            return EnumSet.of(RenderScope.WORLD_PLAYER_SETTINGS);
         }
     }
 

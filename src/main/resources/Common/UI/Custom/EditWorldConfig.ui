@@ -146,9 +146,51 @@ Group #EditWorldConfigPanel {
                 LayoutMode: Top;
                 FlexWeight: 1;
 
-                Label #AllowedPlayersTitle {
-                    Text: "Group Members";
+                Group #AllowedPlayersHeader {
                     Padding: (Top: 5, Bottom: 5);
+                    LayoutMode: Left;
+
+                    Label #AllowedPlayersTitle {
+                        Text: "Group Members";
+                        FlexWeight: 1;
+                    }
+
+                    Group #AllowedPlayersNav {
+                        FlexWeight: 1;
+                        LayoutMode: Left;
+                        TextButton #PrevAllowedBtn {
+                            FlexWeight: 1;
+                            Style: TextButtonStyle(
+                                Default: (
+                                    LabelStyle: (
+                                        FontSize: 16,
+                                        TextColor: #ffffffff
+                                    )
+                                ),
+                                Sounds: $C.@ButtonSounds
+                            );
+                        Text: "<";
+                        }
+
+                        Label #AllowedPlayersPagination {
+                            FlexWeight: 3;
+                            Text: "Loading...";
+                        }
+
+                        TextButton #NextAllowedBtn {
+                            FlexWeight: 1;
+                            Style: TextButtonStyle(
+                                Default: (
+                                    LabelStyle: (
+                                        FontSize: 16,
+                                        TextColor: #ffffffff
+                                    )
+                                ),
+                                Sounds: $C.@ButtonSounds
+                            );
+                        Text: ">";
+                        }
+                    }
                 }
 
                 Group #AllowedPlayers {
@@ -162,10 +204,52 @@ Group #EditWorldConfigPanel {
                 LayoutMode: Top;
                 FlexWeight: 1;
 
-                Label #DisallowedPlayersTitle {
-                    Text: "Other Players";
+                Group #AllowedPlayersHeader {
                     Padding: (Top: 5, Bottom: 5);
+                    LayoutMode: Left;
+
+                    Label #DisallowedPlayersTitle {
+                        Text: "Other Players";
+                        FlexWeight: 1;
+                    }
+
+                    Group #DisallowedPlayersNav {
+                        FlexWeight: 1;
+                        LayoutMode: Left;
+                        TextButton #PrevDisallowedBtn {
+                            FlexWeight: 1;
+                            Style: TextButtonStyle(
+                                Default: (
+                                    LabelStyle: (
+                                        FontSize: 16,
+                                        TextColor: #ffffffff
+                                    )
+                                ),
+                            Sounds: $C.@ButtonSounds
+                            );
+                        Text: "<";
+                    }
+
+                    Label #DisallowedPlayersPagination {
+                        FlexWeight: 3;
+                        Text: "Loading...";
+                    }
+
+                    TextButton #NextDisallowedBtn {
+                        FlexWeight: 1;
+                        Style: TextButtonStyle(
+                            Default: (
+                                LabelStyle: (
+                                    FontSize: 16,
+                                    TextColor: #ffffffff
+                                )
+                            ),
+                        Sounds: $C.@ButtonSounds
+                        );
+                    Text: ">";
+                    }
                 }
+            }
 
                 Group #DisallowedPlayers {
                     LayoutMode: TopScrolling;

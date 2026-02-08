@@ -1,6 +1,7 @@
 Group #ModInfoPanel {
     LayoutMode: Top;
     FlexWeight: 10;
+    Padding: (Left: 5);
 
     Label #ModInfoPrompt {
         Padding: (Top: 5, Bottom: 5);

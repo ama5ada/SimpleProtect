@@ -35,6 +35,7 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
     // Event type constants for data codec
     private static final String PANEL_CLICK = "PanelBtnClick";
     private static final String CONFIG_ACTION = "ConfigBtnClick";
+    private static final String PAGINATION_ACTION = "PaginationBtnClick";
     private static final String GLOBAL_CONFIG_UPDATE = "GlobalConfigUpdate";
     private static final String WORLD_CONFIG_UPDATE = "WorldConfigUpdate";
     private static final String PROTECTION_UPDATE = "ProtectionUpdate";
@@ -172,6 +173,9 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
                 .append(new KeyedCodec<>(GROUP_ACTION, Codec.STRING),
                         (data, value) -> data.groupClicked = value,
                         data -> data.groupClicked).add()
+                .append(new KeyedCodec<>(PAGINATION_ACTION, Codec.STRING),
+                        (data, value) -> data.paginationAction = value,
+                        data -> data.paginationAction).add()
                 .build();
 
         String worldFilter;
@@ -186,5 +190,6 @@ public class SimpleProtectUI extends InteractiveCustomUIPage<SimpleProtectUI.Dat
         String uuidInputUpdate;
         String addUuidAction;
         String groupClicked;
+        String paginationAction;
     }
 }

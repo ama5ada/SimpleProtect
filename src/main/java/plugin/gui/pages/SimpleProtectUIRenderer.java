@@ -35,6 +35,7 @@ public class SimpleProtectUIRenderer {
     // Event type constants
     private static final String PANEL_CLICK = "PanelBtnClick";
     private static final String CONFIG_ACTION = "ConfigBtnClick";
+    private static final String PAGINATION_ACTION = "PaginationBtnClick";
     private static final String GLOBAL_CONFIG_UPDATE = "GlobalConfigUpdate";
     private static final String WORLD_CONFIG_UPDATE = "WorldConfigUpdate";
     private static final String PROTECTION_UPDATE = "ProtectionUpdate";
@@ -92,6 +93,11 @@ public class SimpleProtectUIRenderer {
      */
     public void renderWorldListPanel(UICommandBuilder uiCommandBuilder, UIEventBuilder uiEventBuilder) {
         uiCommandBuilder.clear("#WorldList");
+
+        // Currently only admins can modify worlds, if the user can't administrate don't render the list
+        if (!uiState.canAdministrate()) {
+            return;
+        }
 
         String[] worldNames = ConfigState.get().getWorldNames();
         if (!uiState.worldFilter().isBlank()) {
@@ -201,9 +207,15 @@ public class SimpleProtectUIRenderer {
 
         if (entries.isEmpty()) {
             uiCommandBuilder.append("#AllowedPlayers", "PlayerButton.ui");
-            uiCommandBuilder.set("#AllowedPlayers[0].Text", "No players");
+            uiCommandBuilder.set("#AllowedPlayers[0].Text", "No Group Members");
+            uiCommandBuilder.set("#PrevAllowedBtn.Disabled", true);
+            uiCommandBuilder.set("#AllowedPlayersPagination.Text", "Page 0 of 0");
+            uiCommandBuilder.set("#NextAllowedBtn.Disabled", true);
             uiCommandBuilder.set("#AllowedPlayers[0].Disabled", true);
         } else {
+            uiCommandBuilder.set("#PrevAllowedBtn.Disabled", page.page() <= 0);
+            uiCommandBuilder.set("#AllowedPlayersPagination.Text", String.format("Page %s of %s", page.page() + 1, page.totalPages()));
+            uiCommandBuilder.set("#NextAllowedBtn.Disabled", page.page() >= page.totalPages() - 1);
             for (int i = 0; i < entries.size(); i++) {
                 PlayerListService.PlayerEntry entry = entries.get(i);
 
@@ -231,9 +243,15 @@ public class SimpleProtectUIRenderer {
 
         if (entries.isEmpty()) {
             uiCommandBuilder.append("#DisallowedPlayers", "PlayerButton.ui");
-            uiCommandBuilder.set("#DisallowedPlayers[0].Text", "No players");
+            uiCommandBuilder.set("#DisallowedPlayers[0].Text", "No Other Players");
+            uiCommandBuilder.set("#PrevDisallowedBtn.Disabled", true);
+            uiCommandBuilder.set("#DisallowedPlayersPagination.Text", "Page 0 of 0");
+            uiCommandBuilder.set("#NextDisallowedBtn.Disabled", true);
             uiCommandBuilder.set("#DisallowedPlayers[0].Disabled", true);
         } else {
+            uiCommandBuilder.set("#PrevDisallowedBtn.Disabled", page.page() <= 0);
+            uiCommandBuilder.set("#DisallowedPlayersPagination.Text", String.format("Page %s of %s", page.page() + 1, page.totalPages()));
+            uiCommandBuilder.set("#NextDisallowedBtn.Disabled", page.page() >= page.totalPages() - 1);
             for (int i = 0; i < entries.size(); i++) {
                 PlayerListService.PlayerEntry entry = entries.get(i);
 
@@ -268,8 +286,11 @@ public class SimpleProtectUIRenderer {
      * Update admin panel button highlights
      */
     public void updateAdminPanelHighlights(UICommandBuilder uiCommandBuilder) {
-        // Only update if admin panel exists
+        // Only update if the player can administrate otherwise remove the panel
         if (!uiState.canAdministrate()) {
+            try {
+                uiCommandBuilder.remove("#AdminConfigOptions");
+            } catch (RuntimeException _) {}
             return;
         }
 
@@ -379,6 +400,10 @@ public class SimpleProtectUIRenderer {
 
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#DeleteBtn",
                 EventData.of(CONFIG_ACTION, "DeleteBtn"), false);
+        uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#PrevAllowedBtn",
+                EventData.of(PAGINATION_ACTION, "PrevAllowedBtn"), false);
+        uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#NextAllowedBtn",
+                EventData.of(PAGINATION_ACTION, "NextAllowedBtn"), false);
 
         bindSharedWorldConfigEvents(uiEventBuilder);
         buildSharedConfigButtons(uiCommandBuilder);
