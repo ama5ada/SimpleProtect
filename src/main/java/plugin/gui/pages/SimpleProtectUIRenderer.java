@@ -404,6 +404,10 @@ public class SimpleProtectUIRenderer {
                 EventData.of(PAGINATION_ACTION, "PrevAllowedBtn"), false);
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#NextAllowedBtn",
                 EventData.of(PAGINATION_ACTION, "NextAllowedBtn"), false);
+        uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#PrevDisallowedBtn",
+                EventData.of(PAGINATION_ACTION, "PrevDisallowedBtn"), false);
+        uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#NextDisallowedBtn",
+                EventData.of(PAGINATION_ACTION, "NextDisallowedBtn"), false);
 
         bindSharedWorldConfigEvents(uiEventBuilder);
         buildSharedConfigButtons(uiCommandBuilder);

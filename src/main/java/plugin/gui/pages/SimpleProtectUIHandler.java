@@ -113,6 +113,8 @@ public class SimpleProtectUIHandler {
         @Override
         public EnumSet<RenderScope> process(Data data, SimpleProtectUIState state) {
             state.setPlayerSearch(data.playerSearchUpdate);
+            state.setCurrentAllowedPage(0);
+            state.setCurrentDisallowedPage(0);
             return EnumSet.of(RenderScope.WORLD_PLAYER_SETTINGS);
         }
     }
@@ -386,9 +388,12 @@ public class SimpleProtectUIHandler {
             switch(data.paginationAction) {
                 case "NextAllowedBtn" -> state.incrementCurrentAllowedPage();
                 case "PrevAllowedBtn" -> state.decrementCurrentAllowedPage();
+                case "NextDisallowedBtn" -> state.incrementCurrentDisallowedPage();
+                case "PrevDisallowedBtn" -> state.decrementCurrentDisallowedPage();
             }
 
             System.out.println(state.currentAllowedPage());
+            System.out.println(state.currentDisallowedPage());
 
             return EnumSet.of(RenderScope.WORLD_PLAYER_SETTINGS);
         }

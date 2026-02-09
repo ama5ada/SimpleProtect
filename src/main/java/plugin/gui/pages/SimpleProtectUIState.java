@@ -169,10 +169,12 @@ public class SimpleProtectUIState {
     }
 
     public int currentAllowedPage() { return currentAllowedPage; }
+    public void setCurrentAllowedPage(int pageNumber) { this.currentAllowedPage = pageNumber; }
     public void incrementCurrentAllowedPage() { this.currentAllowedPage++; }
     public void decrementCurrentAllowedPage() { this.currentAllowedPage--; }
 
     public int currentDisallowedPage() { return currentDisallowedPage; }
+    public void setCurrentDisallowedPage(int pageNumber) { this.currentDisallowedPage = pageNumber; }
     public void incrementCurrentDisallowedPage() { this.currentDisallowedPage++; }
     public void decrementCurrentDisallowedPage() { this.currentDisallowedPage--; }
 
