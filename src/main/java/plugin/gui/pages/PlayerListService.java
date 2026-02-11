@@ -150,6 +150,7 @@ public final class PlayerListService {
     ) {
         int total = entries.size();
         int maxPage = Math.max(0, ((total - 1) / pageSize));
+        page = Math.max(0, page);
         page = Math.min(page, maxPage);
         int from = Math.min(page * pageSize, total);
         int to = Math.min(from + pageSize, total);

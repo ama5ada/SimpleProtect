@@ -392,9 +392,6 @@ public class SimpleProtectUIHandler {
                 case "PrevDisallowedBtn" -> state.decrementCurrentDisallowedPage();
             }
 
-            System.out.println(state.currentAllowedPage());
-            System.out.println(state.currentDisallowedPage());
-
             return EnumSet.of(RenderScope.WORLD_PLAYER_SETTINGS);
         }
     }

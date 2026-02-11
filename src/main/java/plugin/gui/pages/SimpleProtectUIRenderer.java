@@ -205,12 +205,26 @@ public class SimpleProtectUIRenderer {
         uiCommandBuilder.clear("#AllowedPlayers");
         List<PlayerListService.PlayerEntry> entries = page.items();
 
+        if (page.page() <= 0) {
+            uiCommandBuilder.set("#PrevAllowedBtn.Disabled", true);
+            uiCommandBuilder.set("#PrevAllowedBtn.Style.Default.LabelStyle.TextColor", "#ffffff00");
+        } else {
+            uiCommandBuilder.set("#PrevAllowedBtn.Disabled", false);
+            uiCommandBuilder.set("#PrevAllowedBtn.Style.Default.LabelStyle.TextColor", "#ffffff");
+        }
+
+        if (page.page() >= page.totalPages() - 1) {
+            uiCommandBuilder.set("#NextAllowedBtn.Disabled", true);
+            uiCommandBuilder.set("#NextAllowedBtn.Style.Default.LabelStyle.TextColor", "#ffffff00");
+        } else {
+            uiCommandBuilder.set("#NextAllowedBtn.Disabled", false);
+            uiCommandBuilder.set("#NextAllowedBtn.Style.Default.LabelStyle.TextColor", "#ffffff");
+        }
+
         if (entries.isEmpty()) {
             uiCommandBuilder.append("#AllowedPlayers", "PlayerButton.ui");
             uiCommandBuilder.set("#AllowedPlayers[0].Text", "No Group Members");
-            uiCommandBuilder.set("#PrevAllowedBtn.Disabled", true);
             uiCommandBuilder.set("#AllowedPlayersPagination.Text", "Page 0 of 0");
-            uiCommandBuilder.set("#NextAllowedBtn.Disabled", true);
             uiCommandBuilder.set("#AllowedPlayers[0].Disabled", true);
         } else {
             uiCommandBuilder.set("#PrevAllowedBtn.Disabled", page.page() <= 0);
@@ -241,17 +255,29 @@ public class SimpleProtectUIRenderer {
         uiCommandBuilder.clear("#DisallowedPlayers");
         List<PlayerListService.PlayerEntry> entries = page.items();
 
+        if (page.page() <= 0) {
+            uiCommandBuilder.set("#PrevDisallowedBtn.Disabled", true);
+            uiCommandBuilder.set("#PrevDisallowedBtn.Style.Default.LabelStyle.TextColor", "#ffffff00");
+        } else {
+            uiCommandBuilder.set("#PrevDisallowedBtn.Disabled", false);
+            uiCommandBuilder.set("#PrevDisallowedBtn.Style.Default.LabelStyle.TextColor", "#ffffff");
+        }
+
+        if (page.page() >= page.totalPages() - 1) {
+            uiCommandBuilder.set("#NextDisallowedBtn.Disabled", true);
+            uiCommandBuilder.set("#NextDisallowedBtn.Style.Default.LabelStyle.TextColor", "#ffffff00");
+        } else {
+            uiCommandBuilder.set("#NextDisallowedBtn.Disabled", false);
+            uiCommandBuilder.set("#NextDisallowedBtn.Style.Default.LabelStyle.TextColor", "#ffffff");
+        }
+
         if (entries.isEmpty()) {
             uiCommandBuilder.append("#DisallowedPlayers", "PlayerButton.ui");
             uiCommandBuilder.set("#DisallowedPlayers[0].Text", "No Other Players");
-            uiCommandBuilder.set("#PrevDisallowedBtn.Disabled", true);
             uiCommandBuilder.set("#DisallowedPlayersPagination.Text", "Page 0 of 0");
-            uiCommandBuilder.set("#NextDisallowedBtn.Disabled", true);
             uiCommandBuilder.set("#DisallowedPlayers[0].Disabled", true);
         } else {
-            uiCommandBuilder.set("#PrevDisallowedBtn.Disabled", page.page() <= 0);
             uiCommandBuilder.set("#DisallowedPlayersPagination.Text", String.format("Page %s of %s", page.page() + 1, page.totalPages()));
-            uiCommandBuilder.set("#NextDisallowedBtn.Disabled", page.page() >= page.totalPages() - 1);
             for (int i = 0; i < entries.size(); i++) {
                 PlayerListService.PlayerEntry entry = entries.get(i);
 
