@@ -55,8 +55,11 @@ public class SimpleProtect extends JavaPlugin {
         getEntityStoreRegistry().registerSystem(new PlaceFluidEventSystem(PlaceFluidEvent.class));
         getEntityStoreRegistry().registerSystem(new RefillContainerEventSystem(RefillContainerEvent.class));
         getEntityStoreRegistry().registerSystem(new CycleBlockGroupEventSystem(CycleBlockGroupEvent.class));
+        getEntityStoreRegistry().registerSystem(new ChangeBlockEventSystem(ChangeBlockEvent.class));
         getEntityStoreRegistry().registerSystem(new HarvestBlockEventSystem(HarvestBlockEvent.class));
         getEntityStoreRegistry().registerSystem(new GatherBlockEventSystem(GatherBlockEvent.class));
+        getEntityStoreRegistry().registerSystem(new DoorInteractEventSystem(DoorInteractionEvent.class));
+        getEntityStoreRegistry().registerSystem(new OpenBlockEventSystem(OpenBlockEvent.class));
 
         getEventRegistry().registerGlobal(PlayerReadyEvent.class, PlayerReadyHandler::HandlePlayerReady);
         getEventRegistry().register(PlayerDisconnectEvent.class, PlayerDisconnectHandler::HandlePlayerDisconnect);

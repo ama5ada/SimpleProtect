@@ -322,11 +322,11 @@ public class SimpleProtectUIHandler {
                     switch (syncAction) {
                         case "SaveBtn" -> {
                             state.saveWorldConfig();
-                            return EnumSet.of(RenderScope.MAIN_PANEL);
+                            return EnumSet.of(RenderScope.MAIN_PANEL, RenderScope.WORLD_PLAYER_SETTINGS);
                         }
                         case "LoadBtn" -> {
                             state.syncWorldConfig();
-                            return EnumSet.of(RenderScope.MAIN_PANEL);
+                            return EnumSet.of(RenderScope.MAIN_PANEL, RenderScope.WORLD_PLAYER_SETTINGS);
                         }
                         case "DeleteBtn" -> {
                             state.deleteWorldConfig();
@@ -347,11 +347,11 @@ public class SimpleProtectUIHandler {
                             state.setNameForWorld("");
                             state.setPanelView(PanelView.EDIT_WORLD);
                             state.saveWorldConfig();
-                            return EnumSet.of(RenderScope.MAIN_PANEL, RenderScope.WORLD_LIST);
+                            return EnumSet.of(RenderScope.MAIN_PANEL, RenderScope.WORLD_LIST, RenderScope.WORLD_PLAYER_SETTINGS);
                         }
                         case "LoadBtn" -> {
                             state.syncWorldConfig();
-                            return EnumSet.of(RenderScope.MAIN_PANEL);
+                            return EnumSet.of(RenderScope.MAIN_PANEL, RenderScope.WORLD_LIST, RenderScope.WORLD_PLAYER_SETTINGS);
                         }
                     }
                 }
@@ -362,11 +362,11 @@ public class SimpleProtectUIHandler {
                     switch (syncAction) {
                         case "SaveBtn" -> {
                             state.saveWorldConfig();
-                            return EnumSet.of(RenderScope.MAIN_PANEL);
+                            return EnumSet.of(RenderScope.MAIN_PANEL, RenderScope.WORLD_PLAYER_SETTINGS);
                         }
                         case "LoadBtn" -> {
                             state.syncWorldConfig();
-                            return EnumSet.of(RenderScope.MAIN_PANEL);
+                            return EnumSet.of(RenderScope.MAIN_PANEL, RenderScope.WORLD_PLAYER_SETTINGS);
                         }
                     }
                 }

@@ -4,7 +4,7 @@
   "Version": "1.2.0",
   "Main": "plugin.SimpleProtect",
   "Dependencies": {
-    "Mods:MoreEvents": ">=1.0.0",
+    "Mods:MoreEvents": ">=1.1.0",
     "Mods:UUIDCache": ">=1.0.0"
   },
   "IncludesAssetPack": true
