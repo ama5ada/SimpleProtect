@@ -96,13 +96,8 @@ public class SimpleProtectUIState {
     }
 
     public void resolvePlayerRole() {
-        if (currentConfig.owner != null && currentConfig.owner.equals(playerUUID)) {
-            currentPlayerRole = PLAYER_ROLE.OWNER;
-        }
-        else if (PermissionsModule.get().hasPermission(
-                playerUUID,
-                ConfigState.get().getAdministratePermission()
-        )) {
+        if (PermissionsModule.get().hasPermission(playerUUID, ConfigState.get().getAdministratePermission())
+                || currentConfig.owners.contains(playerUUID)) {
             currentPlayerRole = PLAYER_ROLE.OWNER;
         } else if (currentConfig.administrators.contains(playerUUID)) {
             currentPlayerRole = PLAYER_ROLE.ADMINISTRATOR;
@@ -114,7 +109,8 @@ public class SimpleProtectUIState {
     }
 
     public Set<UUID> getActiveRoleGroup() {
-        return switch (currentPlayerRole) {
+        return switch (editPlayerRole) {
+            case OWNER -> currentConfig.owners;
             case ADMINISTRATOR -> currentConfig.administrators;
             case MODERATOR -> currentConfig.moderators;
             default -> currentConfig.members;

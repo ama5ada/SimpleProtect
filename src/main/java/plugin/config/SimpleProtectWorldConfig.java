@@ -14,7 +14,7 @@ public class SimpleProtectWorldConfig {
     public Set<UUID> members = new HashSet<>();
     public Set<UUID> moderators = new HashSet<>();
     public Set<UUID> administrators = new HashSet<>();
-    public UUID owner;
+    public Set<UUID> owners = new HashSet<>();
 
     public static final BuilderCodec<SimpleProtectWorldConfig> CODEC =
             BuilderCodec.builder(SimpleProtectWorldConfig.class, SimpleProtectWorldConfig::new)
@@ -72,20 +72,11 @@ public class SimpleProtectWorldConfig {
                                     .toArray(String[]::new)
                     ).add()
                     .append(
-                            new KeyedCodec<>("Owner", Codec.STRING),
-                            (cfg, val) -> {
-                                if (val != null && !val.isEmpty()) {
-                                    try {
-                                        cfg.owner = UUID.fromString(val);
-                                    } catch (IllegalArgumentException e) {
-                                        System.out.println("Invalid Owner UUID ignored: " + val);
-                                        cfg.owner = null;
-                                    }
-                                } else {
-                                    cfg.owner = null;
-                                }
-                            },
-                            cfg -> cfg.owner != null ? cfg.owner.toString() : null
+                            new KeyedCodec<>("Owners", Codec.STRING_ARRAY),
+                            (cfg, val) -> cfg.owners.addAll(parseUUIDSet(val)),
+                            cfg -> cfg.owners.stream()
+                                    .map(UUID::toString)
+                                    .toArray(String[]::new)
                     )
                     .add()
                     .build();
@@ -112,7 +103,7 @@ public class SimpleProtectWorldConfig {
         members = target.members != null ? new HashSet<>(target.members) : new HashSet<>();
         moderators = target.moderators != null ? new HashSet<>(target.moderators) : new HashSet<>();
         administrators = target.administrators != null ? new HashSet<>(target.administrators) : new HashSet<>();
-        owner = target.owner;
+        owners = target.owners != null ? new HashSet<>(target.owners) : new HashSet<>();
     }
 
     public SimpleProtectWorldConfig() {}

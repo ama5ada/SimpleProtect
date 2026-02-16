@@ -237,6 +237,6 @@ public class ProtectionUtil {
 
     private static boolean hasLocalBypass(SimpleProtectWorldConfig config, UUID playerUUID) {
         return config.members.contains(playerUUID) || config.moderators.contains(playerUUID) ||
-                config.administrators.contains(playerUUID) || config.owner == playerUUID;
+                config.administrators.contains(playerUUID) || config.owners.contains(playerUUID);
     }
 }

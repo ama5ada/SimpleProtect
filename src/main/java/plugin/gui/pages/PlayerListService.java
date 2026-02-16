@@ -22,6 +22,7 @@ public final class PlayerListService {
     ) {
         return CompletableFuture.supplyAsync(() -> {
             Set<UUID> source = switch (role) {
+                case OWNER -> config.owners;
                 case ADMINISTRATOR -> config.administrators;
                 case MODERATOR -> config.moderators;
                 default -> config.members;
@@ -89,7 +90,7 @@ public final class PlayerListService {
             excluded.addAll(config.administrators);
             excluded.addAll(config.moderators);
             excluded.addAll(config.members);
-            excluded.add(config.owner);
+            excluded.addAll(config.owners);
 
             PlayerInfoDB.queryPlayersAsync(normalize(search), dbResult -> {
                 dbResult.forEach(UUIDCache.get()::putPlayerInfo);

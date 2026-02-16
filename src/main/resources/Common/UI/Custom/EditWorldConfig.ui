@@ -136,6 +136,20 @@ Group #EditWorldConfigPanel {
                 Text: "Administrators";
             }
 
+            TextButton #OwnerBtn {
+                Padding: (Full: 5);
+                Style: TextButtonStyle(
+                    Default: (
+                        LabelStyle: (
+                            FontSize: 16,
+                            TextColor: #ffffffff
+                        )
+                    ),
+                Sounds: $C.@ButtonSounds
+                );
+                Text: "Owners";
+            }
+
         }
 
         Group #PlayerColumns {

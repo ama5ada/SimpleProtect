@@ -383,16 +383,19 @@ public class SimpleProtectUIRenderer {
 
     /**
      * Update group selection button highlights
+     * TODO : Only update the buttons for roles that can be managed (disable other roles on first render, set text clear)
      */
     public void updateGroupSelectionPanel(UICommandBuilder uiCommandBuilder) {
         uiCommandBuilder.set("#MemberBtn.Background", "#00000000");
         uiCommandBuilder.set("#ModeratorBtn.Background", "#00000000");
         uiCommandBuilder.set("#AdministratorBtn.Background", "#00000000");
+        uiCommandBuilder.set("#OwnerBtn.Background", "#00000000");
 
         switch(uiState.editPlayerRole()) {
             case MEMBER -> uiCommandBuilder.set("#MemberBtn.Background", "#263047CC");
             case MODERATOR -> uiCommandBuilder.set("#ModeratorBtn.Background", "#263047CC");
             case ADMINISTRATOR -> uiCommandBuilder.set("#AdministratorBtn.Background", "#263047CC");
+            case OWNER -> uiCommandBuilder.set("#OwnerBtn.Background", "#263047CC");
         }
     }
 
@@ -495,5 +498,7 @@ public class SimpleProtectUIRenderer {
                 EventData.of(GROUP_ACTION, "Moderator"), false);
         uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#AdministratorBtn",
                 EventData.of(GROUP_ACTION, "Administrator"), false);
+        uiEventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#OwnerBtn",
+                EventData.of(GROUP_ACTION, "Owner"), false);
     }
 }

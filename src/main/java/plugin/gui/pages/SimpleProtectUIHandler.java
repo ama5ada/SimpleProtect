@@ -467,10 +467,6 @@ public class SimpleProtectUIHandler {
      * @return - set of UUID of players with the current role
      */
     private static Set<UUID> resolveConfigGroup(SimpleProtectUIState state) {
-        return switch(state.editPlayerRole()) {
-            case MODERATOR -> state.config().moderators;
-            case ADMINISTRATOR -> state.config().administrators;
-            default -> state.config().members;
-        };
+        return state.getActiveRoleGroup();
     }
 }

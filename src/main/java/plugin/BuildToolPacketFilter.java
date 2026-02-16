@@ -44,4 +44,5 @@ public class BuildToolPacketFilter implements PacketFilter {
 
         String worldName = PacketLayerCache.get(uuid).world();
         return ProtectionUtil.ShouldProtect(playerRef, worldName, EVENT_TYPE.BUILDER_TOOL);
-    }}
+    }
+}
