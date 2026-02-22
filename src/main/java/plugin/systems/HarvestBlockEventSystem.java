@@ -13,7 +13,6 @@ import plugin.types.EVENT_TYPE;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Objects;
 
 public class HarvestBlockEventSystem extends EntityEventSystem<EntityStore, HarvestBlockEvent> {
     public HarvestBlockEventSystem(@Nonnull Class<HarvestBlockEvent> eventType) {

@@ -24,6 +24,7 @@ public class ProtectionUtil {
     public static boolean ShouldProtect(Player player, EVENT_TYPE event) {
         boolean globalProtection = ConfigState.get().isProtected();
         boolean verboseLogging = ConfigState.get().isVerbose();
+        boolean globalNotify = ConfigState.get().notifyPlayer();
 
         // Shortcut if globalProtection is off
         if (!globalProtection) {
@@ -145,7 +146,7 @@ public class ProtectionUtil {
                             event, playerName, playerUUID, worldName));
         }
 
-        if (currentConfig.notifyPlayer) {
+        if (globalNotify && currentConfig.notifyPlayer) {
             playerRef.sendMessage(Message.raw(
                     String.format("[Simple Protect] %s is disabled.", event)
             ));
@@ -163,6 +164,7 @@ public class ProtectionUtil {
     public static boolean ShouldProtect(PlayerRef playerRef, String worldName, EVENT_TYPE event) {
         boolean globalProtection = ConfigState.get().isProtected();
         boolean verboseLogging = ConfigState.get().isVerbose();
+        boolean globalNotify = ConfigState.get().notifyPlayer();
 
         // Shortcut if globalProtection is off
         if (!globalProtection) {
@@ -227,7 +229,7 @@ public class ProtectionUtil {
                             event, playerUUID, worldName));
         }
 
-        if (currentConfig.notifyPlayer) {
+        if (globalNotify && currentConfig.notifyPlayer) {
             playerRef.sendMessage(Message.raw(
                     String.format("[Simple Protect] %s is disabled.", event)
             ));
